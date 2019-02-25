@@ -103,3 +103,65 @@ function updateConfigSheet() {
   configSheet.getRange(1, 1, data.length, 2).setValues(data);
 }
 
+/**
+ * 脆弱性情報・注意喚起情報をチェック
+ */
+function watch() {
+  // 前回確認日時
+  var latestWatchedAt = config['latestWatchedAt'];
+
+  // 今回確認日時
+  var watchedAt = new Date();
+
+  // JPCERTから注意喚起情報を取得し、通知
+  var jpcertNewHeadsUps = getJpcertNewHeadsUp(latestWatchedAt);
+  Logger.log(jpcertNewHeadsUps);
+
+  // 前回確認日時を更新
+  config['latestWatchedAt'] = watchedAt;
+  updateConfigSheet();
+}
+
+/**
+ * JPCERTから注意喚起情報を取得し、呼び出し元へ返す.
+ *
+ * @param {Date} latestWatchedAt 前回確認日時
+ *
+ * @return {Array(HashMap)} 注意喚起情報
+ */
+function getJpcertNewHeadsUp(latestWatchedAt) {
+  var result = [];
+  var latestWatchedAtTime = latestWatchedAt.getTime();
+
+  // rssを取得
+  var response = UrlFetchApp.fetch("https://www.jpcert.or.jp/rss/jpcert.rdf");
+  var xml = XmlService.parse(response.getContentText());
+
+  // rssのネームスペース
+  var namespace = XmlService.getNamespace('http://purl.org/rss/1.0/');
+  var namespaceDc = XmlService.getNamespace('http://purl.org/dc/elements/1.1/');
+
+  // rssに含まれるitemから条件に該当するデータを取得
+  var items = xml.getRootElement().getChildren("item", namespace);
+  for (var i = 0; i < items.length; i++) {
+    var item = {
+      'title': items[i].getChild('title', namespace).getText(),
+      'link' : items[i].getChild('link', namespace).getText(),
+      'date' : new Date(items[i].getChild('date', namespaceDc).getText())
+    };
+
+    // 注意喚起以外の情報は除外
+    if (!item['link'].match(/https:\/\/www\.jpcert\.or\.jp\/at\//)) {
+      continue;
+    }
+
+    // 確認済みの情報は除外
+    if (item['date'].getTime() <= latestWatchedAtTime) {
+      continue;
+    }
+
+    result.push(item);
+  }
+
+  return result;
+}
