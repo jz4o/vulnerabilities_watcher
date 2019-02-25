@@ -1,13 +1,17 @@
 /**
  * グローバル変数.
  *
- * spreadSheet [SpreadSheet] スプレッドシート
- * configSheet [Sheet]       configシート
- * config      [HashMap]     configシートの内容
+ * scriptProperties [Properties]  スクリプトのプロパティ
+ * spreadSheet      [SpreadSheet] スプレッドシート
+ * configSheet      [Sheet]       configシート
+ * config           [HashMap]     configシートの内容
+ * slackIncomingUrl [String]      SlackのIncomingWebHooksで設定したURL
  */
-var spreadSheet = SpreadsheetApp.getActiveSpreadsheet();
+var scriptProperties = PropertiesService.getScriptProperties();
+var spreadSheet      = SpreadsheetApp.getActiveSpreadsheet();
 var configSheet;
 var config;
+var slackIncomingUrl = scriptProperties.getProperty('SLACK_INCOMING_URL');
 
 // セットアップ.
 setup();
@@ -115,7 +119,9 @@ function watch() {
 
   // JPCERTから注意喚起情報を取得し、通知
   var jpcertNewHeadsUps = getJpcertNewHeadsUp(latestWatchedAt);
-  Logger.log(jpcertNewHeadsUps);
+  if (jpcertNewHeadsUps.length > 0) {
+    postMessage(slackMessagefy(jpcertNewHeadsUps));
+  }
 
   // 前回確認日時を更新
   config['latestWatchedAt'] = watchedAt;
@@ -164,4 +170,38 @@ function getJpcertNewHeadsUp(latestWatchedAt) {
   }
 
   return result;
+}
+
+/**
+ * 脆弱性情報・注意喚起情報をSlack通知用に加工して呼び出し元に返す.
+ *
+ * @param {HashMap} items 脆弱性情報・注意喚起情報
+ *
+ * @return {String} 脆弱性情報・注意喚起情報(Slack通知用)
+ */
+function slackMessagefy(items) {
+  var result = ">>>\n";
+  for (var i = 0; i < items.length; i++) {
+    var item = items[i];
+    result += '<' + item['link'] + '|' + item['title'] + '>' + "\n";
+    result += '[' + item['date'] + ']' + "\n";
+    result += "\n";
+  }
+
+  return result;
+}
+
+/**
+ * Slackにメッセージを通知.
+ *
+ * @param {String} 通知内容
+ */
+function postMessage(message) {
+  var options = {
+    'method'     : 'post',
+    'contentType': 'application/json',
+    'payload'    : JSON.stringify({ 'text': message })
+  };
+
+  UrlFetchApp.fetch(slackIncomingUrl, options);
 }
