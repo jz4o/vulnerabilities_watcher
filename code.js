@@ -123,6 +123,12 @@ function watch() {
     postMessage(slackMessagefy(jpcertNewHeadsUps));
   }
 
+  // JPCERTから脆弱性情報を取得し、通知
+  var jpcertNewVulnerabilities = getJpcertNewVulnerabilities(latestWatchedAt);
+  if (jpcertNewVulnerabilities.length > 0) {
+    postMessage(slackMessagefy(jpcertNewVulnerabilities));
+  }
+
   // 前回確認日時を更新
   config['latestWatchedAt'] = watchedAt;
   updateConfigSheet();
@@ -160,6 +166,45 @@ function getJpcertNewHeadsUp(latestWatchedAt) {
     if (!item['link'].match(/https:\/\/www\.jpcert\.or\.jp\/at\//)) {
       continue;
     }
+
+    // 確認済みの情報は除外
+    if (item['date'].getTime() <= latestWatchedAtTime) {
+      continue;
+    }
+
+    result.push(item);
+  }
+
+  return result;
+}
+
+/**
+ * JPCERTから脆弱性情報を取得し、呼び出し元へ返す.
+ *
+ * @param {Date} latestWatchedAt 前回確認日時
+ *
+ * @return {Array(HashMap)} 脆弱性情報
+ */
+function getJpcertNewVulnerabilities(latestWatchedAt) {
+  var result = [];
+  var latestWatchedAtTime = latestWatchedAt.getTime();
+
+  // rssを取得
+  var response = UrlFetchApp.fetch("http://jvn.jp/rss/jvn.rdf");
+  var xml = XmlService.parse(response.getContentText());
+
+  // rssのネームスペース
+  var namespace = XmlService.getNamespace("http://purl.org/rss/1.0/")
+  var namespaceDcTerms = XmlService.getNamespace("http://purl.org/dc/terms/");
+
+  // rssに含まれるitemから条件に該当するデータを取得
+  var items = xml.getRootElement().getChildren("item", namespace);
+  for (var i = 0; i < items.length; i++) {
+    var item = {
+      'title' : items[i].getChild('title', namespace).getText(),
+      'link'  : items[i].getChild('link', namespace).getText(),
+      'date'  : new Date(items[i].getChild('issued', namespaceDcTerms).getText())
+    };
 
     // 確認済みの情報は除外
     if (item['date'].getTime() <= latestWatchedAtTime) {
