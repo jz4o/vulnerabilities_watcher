@@ -129,6 +129,12 @@ function watch() {
     postMessage(slackMessagefy(jpcertNewVulnerabilities));
   }
 
+  // ESETからニュースを取得し、通知
+  var esetNewNews = getEsetNewNews(latestWatchedAt);
+  if (esetNewNews.length > 0) {
+    postMessage(slackMessagefy(esetNewNews));
+  }
+
   // 前回確認日時を更新
   config['latestWatchedAt'] = watchedAt;
   updateConfigSheet();
@@ -205,6 +211,46 @@ function getJpcertNewVulnerabilities(latestWatchedAt) {
       'link'  : items[i].getChild('link', namespace).getText(),
       'date'  : new Date(items[i].getChild('issued', namespaceDcTerms).getText())
     };
+
+    // 確認済みの情報は除外
+    if (item['date'].getTime() <= latestWatchedAtTime) {
+      continue;
+    }
+
+    result.push(item);
+  }
+
+  return result;
+}
+
+/**
+ * ESETからニュースを取得し、呼び出し元へ返す.
+ *
+ * @param {Date} latestWatchedAt 前回確認日時
+ *
+ * @return {Array(HashMap)} ニュース
+ */
+function getEsetNewNews(latestWatchedAt) {
+  var result = [];
+  var latestWatchedAtTime = latestWatchedAt.getTime();
+
+  // rssを取得
+  var response = UrlFetchApp.fetch('https://eset-info.canon-its.jp/rss/data_format=xml&xml_media_nm=malware');
+  var xml = XmlService.parse(response.getContentText());
+
+  // rssに含まれるitemから条件に該当するデータを取得
+  var items = xml.getRootElement().getChild('channel').getChildren('item');
+  for (var i = 0; i < items.length; i++) {
+    var item = {
+      'title' : items[i].getChild('title').getText(),
+      'link'  : items[i].getChild('link').getText(),
+      'date'  : new Date(items[i].getChild('pubDate').getText())
+    };
+
+    // ニュース以外の情報は除外
+    if (!item['link'].match(/https:\/\/eset\-info\.canon\-its\.jp\/malware_info\/news\/detail\//)) {
+      continue;
+    }
 
     // 確認済みの情報は除外
     if (item['date'].getTime() <= latestWatchedAtTime) {
