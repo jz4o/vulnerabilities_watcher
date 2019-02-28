@@ -120,19 +120,19 @@ function watch() {
   // JPCERTから注意喚起情報を取得し、通知
   var jpcertNewHeadsUps = getJpcertNewHeadsUp(latestWatchedAt);
   if (jpcertNewHeadsUps.length > 0) {
-    postMessage(slackMessagefy(jpcertNewHeadsUps));
+    postMessage(slackMessagefy('JPCERT：注意喚起情報', jpcertNewHeadsUps));
   }
 
   // JPCERTから脆弱性情報を取得し、通知
   var jpcertNewVulnerabilities = getJpcertNewVulnerabilities(latestWatchedAt);
   if (jpcertNewVulnerabilities.length > 0) {
-    postMessage(slackMessagefy(jpcertNewVulnerabilities));
+    postMessage(slackMessagefy('JPCERT：脆弱性情報', jpcertNewVulnerabilities));
   }
 
   // ESETからニュースを取得し、通知
   var esetNewNews = getEsetNewNews(latestWatchedAt);
   if (esetNewNews.length > 0) {
-    postMessage(slackMessagefy(esetNewNews));
+    postMessage(slackMessagefy('ESET：ニュース', esetNewNews));
   }
 
   // 前回確認日時を更新
@@ -266,12 +266,14 @@ function getEsetNewNews(latestWatchedAt) {
 /**
  * 脆弱性情報・注意喚起情報をSlack通知用に加工して呼び出し元に返す.
  *
+ * @param {String}  title 脆弱性情報・注意喚起情報の取得元
  * @param {HashMap} items 脆弱性情報・注意喚起情報
  *
  * @return {String} 脆弱性情報・注意喚起情報(Slack通知用)
  */
-function slackMessagefy(items) {
-  var result = ">>>\n";
+function slackMessagefy(title, items) {
+  var result = title + '\n\n';
+  result += '>>>\n';
   for (var i = 0; i < items.length; i++) {
     var item = items[i];
     result += '<' + item['link'] + '|' + item['title'] + '>' + "\n";
