@@ -135,6 +135,12 @@ function watch() {
     postMessage(slackMessagefy('ESET：ニュース', esetNewNews));
   }
 
+  // JC3から新着情報を取得し、通知
+  var jc3NewInformation = getJc3NewInformation(latestWatchedAt);
+  if (jc3NewInformation.length > 0) {
+    postMessage(slackMessagefy('JC3：新着情報', jc3NewInformation));
+  }
+
   // 前回確認日時を更新
   config['latestWatchedAt'] = watchedAt;
   updateConfigSheet();
@@ -256,6 +262,78 @@ function getEsetNewNews(latestWatchedAt) {
     if (item['date'].getTime() <= latestWatchedAtTime) {
       continue;
     }
+
+    result.push(item);
+  }
+
+  return result;
+}
+
+/**
+ * JC3から新着情報を取得し、呼び出し元へ返す.
+ *
+ * @param {Date} latestWatchedAt 前回確認日時
+ *
+ * @return {Array(HashMap)} 新着情報
+ */
+function getJc3NewInformation(latestWatchedAt) {
+  var result = [];
+  var latestWatchedAtTime = latestWatchedAt.getTime();
+
+  var jc3Url = 'https://www.jc3.or.jp/';
+
+  // JC3のHTMLソースを取得
+  // ※HTMLソース全体を使用するとXmlServiceによるパースでエラーが発生するため、
+  // 必要な箇所だけ使用するようにしている
+  var response = UrlFetchApp.fetch(jc3Url);
+  var NewsAreaSection = response.getContentText().match(/<section class="topNewsArea">[\s\S]*?<\/section>/);
+  var xml = XmlService.parse(NewsAreaSection);
+
+  // 新着情報を含むElementを取得
+  var newsListElement = xml.getRootElement().getChild('dl'); // 新着情報部分の親Element
+  var newsDates  = newsListElement.getChildren('dt');        // 発表時刻
+  var newsDescriptions = newsListElement.getChildren('dd');  // 内容
+
+  // 発表時刻の数と内容の数が異なる場合は取得失敗
+  if (newsDates.length != newsDescriptions.length) {
+    errorMsg = 'JC3の情報取得に失敗しました';
+    Logger.log(errorMsg);
+    postMessage(errorMsg);
+
+    return result;
+  }
+
+  // 新着情報から条件に該当するデータを取得
+  for (var i = 0; i < newsDescriptions.length; i++) {
+    var newsDescription = newsDescriptions[i].getText().replace(/\s+$/, '');
+    var date = new Date(newsDates[i].getText().split(/年|月|日/, 3).join('/') + ' 23:59:59');
+
+    // JC3の会員に関する情報は除外
+    if (newsDescription.match(/^賛助会員/)) {
+      continue;
+    }
+
+    // JC3に関する情報は除外
+    if (newsDescription.match(/^当法人が/)) {
+      continue;
+    }
+
+    // 詳細情報を提示していない情報は除外
+    if (!newsDescriptions[i].getChild('ul')) {
+      continue;
+    }
+    var link = jc3Url + newsDescriptions[i].getChild('ul').getChild('li').getChild('a').getAttribute('href').getValue();
+
+    // 確認済みの情報は除外
+    if (date.getTime() <= latestWatchedAtTime) {
+      continue;
+    }
+
+    var item = {
+      'title' : newsDescription,
+      'link'  : link,
+      'date'  : date
+    };
 
     result.push(item);
   }
