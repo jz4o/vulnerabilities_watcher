@@ -6,12 +6,30 @@
  * configSheet      [Sheet]       configシート
  * config           [HashMap]     configシートの内容
  * slackIncomingUrl [String]      SlackのIncomingWebHooksで設定したURL
+ * redmine          [HashMap]     RedmineのAPIを使用するために必要な内容
  */
 var scriptProperties = PropertiesService.getScriptProperties();
 var spreadSheet      = SpreadsheetApp.getActiveSpreadsheet();
 var configSheet;
 var config;
 var slackIncomingUrl = scriptProperties.getProperty('SLACK_INCOMING_URL');
+var redmine = {
+  'url'       : scriptProperties.getProperty('REDMINE_URL'),
+  'apiKey'    : scriptProperties.getProperty('REDMINE_API_KEY'),
+  'projectId' : scriptProperties.getProperty('REDMINE_PROJECT_ID'),
+  'tracker' : {
+    'task' : scriptProperties.getProperty('REDMINE_TRACKER_TASK_ID')
+  },
+  'status' : {
+    'resolve' : scriptProperties.getProperty('REDMINE_STATUS_RESOLVE_ID')
+  },
+  'priority' : {
+    'normal' : scriptProperties.getProperty('REDMINE_PRIORITY_NORMAL_ID')
+  },
+  'category' : {
+    'vulnerabilityNothing' : scriptProperties.getProperty('REDMINE_CATEGORY_VULNERABILITY_NOTHING_ID')
+  }
+};
 
 // セットアップ.
 setup();
@@ -129,16 +147,31 @@ function watch() {
     postMessage(slackMessagefy('JPCERT：脆弱性情報', jpcertNewVulnerabilities));
   }
 
+  // JPCERTからの取得結果をRedmineのチケットに登録
+  if (jpcertNewHeadsUps.length + jpcertNewVulnerabilities.length <= 0) {
+    createTicketForWhenNotFoundNewVulnerability('JPCERT', watchedAt);
+  }
+
   // ESETからニュースを取得し、通知
   var esetNewNews = getEsetNewNews(latestWatchedAt);
   if (esetNewNews.length > 0) {
     postMessage(slackMessagefy('ESET：ニュース', esetNewNews));
   }
 
+  // ESETからの情報取得結果をRedmineのチケットに登録
+  if (esetNewNews.length <= 0) {
+    createTicketForWhenNotFoundNewVulnerability('ESET', watchedAt);
+  }
+
   // JC3から新着情報を取得し、通知
   var jc3NewInformation = getJc3NewInformation(latestWatchedAt);
   if (jc3NewInformation.length > 0) {
     postMessage(slackMessagefy('JC3：新着情報', jc3NewInformation));
+  }
+
+  // JC3からの情報取得結果をRedmineのチケットに登録
+  if (esetNewNews.length <= 0) {
+    createTicketForWhenNotFoundNewVulnerability('JC3', watchedAt);
   }
 
   // 前回確認日時を更新
@@ -375,4 +408,77 @@ function postMessage(message) {
   };
 
   UrlFetchApp.fetch(slackIncomingUrl, options);
+}
+
+/**
+ * Redmineにチケットを登録.
+ * ※前回確認時以降に新しい脆弱性情報・注意喚起情報が発表されていない場合に使用
+ *
+ * @param {String} siteName  脆弱性情報・注意喚起情報の取得元
+ * @param {Date}   watchedAt 確認日時
+ */
+function createTicketForWhenNotFoundNewVulnerability(siteName, watchedAt) {
+  createTicket(
+    buildTicketSubject(siteName, watchedAt, null),
+    '',
+    redmine['status']['resolve'],
+    redmine['category']['vulnerabilityNothing'],
+    100
+  );
+}
+
+/**
+ * Redmineのチケットの件名を作成し、呼び出し元に返す.
+ *
+ * @param {String} siteName           脆弱性情報・注意喚起情報の取得元
+ * @param {Date}   watchedAt          確認日時
+ * @param {String} vulnerabilityTitle 脆弱性情報・注意喚起情報の件名
+ *
+ * @return {String} チケットの件名
+ */
+function buildTicketSubject(sitename, watchedAt, vulnerabilityTitle) {
+  var subject = sitename + ' ' + Utilities.formatDate(watchedAt, 'JST', 'YYYY-MM-dd HH:mm');
+  if (vulnerabilityTitle) {
+    subject += ' [' + vulnerabilityTitle + ']';
+  }
+
+  return subject;
+}
+
+/**
+ * Redmineのチケットを作成.
+ *
+ * @param {String}  subject     チケットの件名
+ * @param {String}  description チケットの説明
+ * @param {Integer} statusId    チケットのステータスID
+ * @param {Integer} categoryId  チケットのカテゴリID
+ * @param {Integer} doneRatio   チケットの進捗率
+ */
+function createTicket(subject, description, statusId, categoryId, doneRatio) {
+  var requestBody = {
+    "issue": {
+      "project_id"     : redmine['projectId'],
+      "tracker_id"     : redmine['tracker']['task'],
+      "subject"        : subject,
+      "description"    : description,
+      "status_id"      : statusId,
+      "priority_id"    : redmine['priority']['normal'],
+      "assigned_to_id" : config['watcherRedmineId'],
+      "category_id"    : categoryId,
+      "done_ratio"     : doneRatio
+    }
+  }
+
+  var headers = {
+    'X-Redmine-API-Key': redmine['apiKey']
+  };
+
+  var options = {
+    'method'      : 'post',
+    'contentType' : 'application/json',
+    "headers"     : headers,
+    'payload'     : JSON.stringify(requestBody)
+  }
+
+  UrlFetchApp.fetch(redmine['url'] + '/issues.json', options);
 }
