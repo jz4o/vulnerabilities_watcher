@@ -21,13 +21,15 @@ var redmine = {
     'task' : scriptProperties.getProperty('REDMINE_TRACKER_TASK_ID')
   },
   'status' : {
+    'new'     : scriptProperties.getProperty('REDMINE_STATUS_NEW_ID'),
     'resolve' : scriptProperties.getProperty('REDMINE_STATUS_RESOLVE_ID')
   },
   'priority' : {
     'normal' : scriptProperties.getProperty('REDMINE_PRIORITY_NORMAL_ID')
   },
   'category' : {
-    'vulnerabilityNothing' : scriptProperties.getProperty('REDMINE_CATEGORY_VULNERABILITY_NOTHING_ID')
+    'vulnerabilityNothing' : scriptProperties.getProperty('REDMINE_CATEGORY_VULNERABILITY_NOTHING_ID'),
+    'escalation'           : scriptProperties.getProperty('REDMINE_CATEGORY_ESCALATION_ID')
   }
 };
 
@@ -150,6 +152,14 @@ function watch() {
   // JPCERTからの取得結果をRedmineのチケットに登録
   if (jpcertNewHeadsUps.length + jpcertNewVulnerabilities.length <= 0) {
     createTicketForWhenNotFoundNewVulnerability('JPCERT', watchedAt);
+  } else {
+    jpcertNewHeadsUps.forEach(function(headsUp) {
+      createTicketForEscalation('JPCERT', watchedAt, headsUp['title'], headsUp['link']);
+    });
+
+    jpcertNewVulnerabilities.forEach(function(vulnerability) {
+      createTicketForEscalation('JPCERT', watchedAt, vulnerability['title'], vulnerability['link']);
+    });
   }
 
   // ESETからニュースを取得し、通知
@@ -424,6 +434,25 @@ function createTicketForWhenNotFoundNewVulnerability(siteName, watchedAt) {
     redmine['status']['resolve'],
     redmine['category']['vulnerabilityNothing'],
     100
+  );
+}
+
+/**
+ * Redmineにチケットを登録.
+ * ※対応の有無の確認が必要な脆弱性情報・注意喚起情報が発表されている場合に使用
+ *
+ * @param {String} siteName           脆弱性情報・注意喚起情報の取得元
+ * @param {Date}   watchedAt          確認日時
+ * @param {String} vulnerabilityTitle 脆弱性情報・注意喚起情報のタイトル
+ * @param {String} vulnerabilityLink  脆弱性情報・注意喚起情報のURL
+ */
+function createTicketForEscalation(siteName, watchedAt, vulnerabilityTitle, vulnerabilityLink) {
+  createTicket(
+    buildTicketSubject(siteName, watchedAt, vulnerabilityTitle),
+    vulnerabilityLink,
+    redmine['status']['new'],
+    redmine['category']['escalation'],
+    0
   );
 }
 
