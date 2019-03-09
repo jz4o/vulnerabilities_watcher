@@ -29,6 +29,7 @@ var redmine = {
   },
   'category' : {
     'vulnerabilityNothing' : scriptProperties.getProperty('REDMINE_CATEGORY_VULNERABILITY_NOTHING_ID'),
+    'watchOver'            : scriptProperties.getProperty('REDMINE_CATEGORY_WATCH_OVER_ID'),
     'escalation'           : scriptProperties.getProperty('REDMINE_CATEGORY_ESCALATION_ID')
   }
 };
@@ -153,12 +154,30 @@ function watch() {
   if (jpcertNewHeadsUps.length + jpcertNewVulnerabilities.length <= 0) {
     createTicketForWhenNotFoundNewVulnerability('JPCERT', watchedAt);
   } else {
+    var watchOvers = config['jpcertWatchOvers'].split(',');
+
     jpcertNewHeadsUps.forEach(function(headsUp) {
-      createTicketForEscalation('JPCERT', watchedAt, headsUp['title'], headsUp['link']);
+      var isWatchOver = watchOvers.some(function(watchOver) {
+        return headsUp['title'].match(watchOver);
+      });
+
+      if (isWatchOver) {
+        createTicketForWatchOver('JPCERT', watchedAt, headsUp['title'], headsUp['link']);
+      } else {
+        createTicketForEscalation('JPCERT', watchedAt, headsUp['title'], headsUp['link']);
+      }
     });
 
     jpcertNewVulnerabilities.forEach(function(vulnerability) {
-      createTicketForEscalation('JPCERT', watchedAt, vulnerability['title'], vulnerability['link']);
+      var isWatchOver = watchOvers.some(function(watchOver) {
+        return vulnerability['title'].match(watchOver);
+      });
+
+      if (isWatchOver) {
+        createTicketForWatchOver('JPCERT', watchedAt, vulnerability['title'], vulnerability['link']);
+      } else {
+        createTicketForEscalation('JPCERT', watchedAt, vulnerability['title'], vulnerability['link']);
+      }
     });
   }
 
@@ -433,6 +452,25 @@ function createTicketForWhenNotFoundNewVulnerability(siteName, watchedAt) {
     '',
     redmine['status']['resolve'],
     redmine['category']['vulnerabilityNothing'],
+    100
+  );
+}
+
+/**
+ * Redmineにチケットを登録.
+ * ※対応が必要ない脆弱性情報・注意喚起情報が発表されている場合に使用
+ *
+ * @param {String} siteName           脆弱性情報・注意喚起情報の取得元
+ * @param {Date}   watchedAt          確認日時
+ * @param {String} vulnerabilityTitle 脆弱性情報・注意喚起情報のタイトル
+ * @param {String} vulnerabilityLink  脆弱性情報・注意喚起情報のURL
+ */
+function createTicketForWatchOver(siteName, watchedAt, vulnerabilityTitle, vulnerabilityLink) {
+  createTicket(
+    buildTicketSubject(siteName, watchedAt, vulnerabilityTitle),
+    vulnerabilityLink,
+    redmine['status']['resolve'],
+    redmine['category']['watchOver'],
     100
   );
 }
