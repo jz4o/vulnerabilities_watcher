@@ -151,34 +151,45 @@ function watch() {
   }
 
   // JPCERTからの取得結果をRedmineのチケットに登録
-  if (jpcertNewHeadsUps.length + jpcertNewVulnerabilities.length <= 0) {
+  var isJpcertTicketCreated = false;
+  var watchOvers = config['jpcertWatchOvers'].split(',');
+
+  jpcertNewHeadsUps.forEach(function(headsUp) {
+    if (getTicketId(headsUp['link'])) {
+      return;
+    }
+    isJpcertTicketCreated = true;
+
+    var isWatchOver = watchOvers.some(function(watchOver) {
+      return headsUp['title'].match(watchOver);
+    });
+
+    if (isWatchOver) {
+      createTicketForWatchOver('JPCERT', watchedAt, headsUp['title'], headsUp['link']);
+    } else {
+      createTicketForEscalation('JPCERT', watchedAt, headsUp['title'], headsUp['link']);
+    }
+  });
+
+  jpcertNewVulnerabilities.forEach(function(vulnerability) {
+    if (getTicketId(vulnerability['link'])) {
+      return;
+    }
+    isJpcertTicketCreated = true;
+
+    var isWatchOver = watchOvers.some(function(watchOver) {
+      return vulnerability['title'].match(watchOver);
+    });
+
+    if (isWatchOver) {
+      createTicketForWatchOver('JPCERT', watchedAt, vulnerability['title'], vulnerability['link']);
+    } else {
+      createTicketForEscalation('JPCERT', watchedAt, vulnerability['title'], vulnerability['link']);
+    }
+  });
+
+  if (!isJpcertTicketCreated) {
     createTicketForWhenNotFoundNewVulnerability('JPCERT', watchedAt);
-  } else {
-    var watchOvers = config['jpcertWatchOvers'].split(',');
-
-    jpcertNewHeadsUps.forEach(function(headsUp) {
-      var isWatchOver = watchOvers.some(function(watchOver) {
-        return headsUp['title'].match(watchOver);
-      });
-
-      if (isWatchOver) {
-        createTicketForWatchOver('JPCERT', watchedAt, headsUp['title'], headsUp['link']);
-      } else {
-        createTicketForEscalation('JPCERT', watchedAt, headsUp['title'], headsUp['link']);
-      }
-    });
-
-    jpcertNewVulnerabilities.forEach(function(vulnerability) {
-      var isWatchOver = watchOvers.some(function(watchOver) {
-        return vulnerability['title'].match(watchOver);
-      });
-
-      if (isWatchOver) {
-        createTicketForWatchOver('JPCERT', watchedAt, vulnerability['title'], vulnerability['link']);
-      } else {
-        createTicketForEscalation('JPCERT', watchedAt, vulnerability['title'], vulnerability['link']);
-      }
-    });
   }
 
   // ESETからニュースを取得し、通知
@@ -548,4 +559,31 @@ function createTicket(subject, description, statusId, categoryId, doneRatio) {
   }
 
   UrlFetchApp.fetch(redmine['url'] + '/issues.json', options);
+}
+
+/**
+ * RedmineのチケットのIDを取得し、呼び出し元に返す.
+ *
+ * @param {String} vulnerabilityLink 脆弱性情報・注意喚起情報のURL
+ *
+ * @return {Integer|null} 該当の脆弱性情報・注意喚起情報のチケットのID
+ */
+function getTicketId(vulnerabilityLink) {
+  var headers = {
+    'X-Redmine-API-Key': redmine['apiKey']
+  };
+
+  var options = {
+    'method'  : 'get',
+    'headers' : headers
+  }
+
+  var response = UrlFetchApp.fetch(redmine['url'] + '/search.json?q=' + vulnerabilityLink, options);
+  var json = JSON.parse(response.getContentText());
+
+  if (json['total_count'] <= 0) {
+    return null;
+  } else {
+    return json['results'][0]['id'];
+  }
 }
