@@ -199,7 +199,17 @@ function watch() {
   }
 
   // ESETからの情報取得結果をRedmineのチケットに登録
-  if (esetNewNews.length <= 0) {
+  var isEsetTicketCreated = false;
+  esetNewNews.forEach(function(news) {
+    if (getTicketId(news['link'])) {
+      return;
+    }
+    isEsetTicketCreated = true;
+
+    createTicketForWatchOver('ESET', watchedAt, news['title'], news['link']);
+  });
+
+  if (!isEsetTicketCreated) {
     createTicketForWhenNotFoundNewVulnerability('ESET', watchedAt);
   }
 
