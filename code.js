@@ -267,6 +267,11 @@ function getJpcertNewHeadsUp(latestWatchedAt) {
       continue;
     }
 
+    // タイトルを調整
+    item['title'] = item['title'].replace(/^注意喚起:/, '');
+    item['title'] = item['title'].replace(/\((?:公開|更新)\)$/, '');
+    item['title'] = item['title'].trim();
+
     result.push(item);
   }
 
