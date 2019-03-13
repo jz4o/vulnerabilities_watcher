@@ -143,24 +143,18 @@ function watch() {
     return;
   }
 
-  // JPCERTから注意喚起情報を取得し、通知
+  // JPCERTから注意喚起情報・脆弱性情報を取得
   var jpcertNewHeadsUps = getJpcertNewHeadsUp(latestWatchedAt);
-  if (jpcertNewHeadsUps.length > 0) {
-    postMessage(slackMessagefy('JPCERT：注意喚起情報', jpcertNewHeadsUps));
-  }
-
-  // JPCERTから脆弱性情報を取得し、通知
   var jpcertNewVulnerabilities = getJpcertNewVulnerabilities(latestWatchedAt);
-  if (jpcertNewVulnerabilities.length > 0) {
-    postMessage(slackMessagefy('JPCERT：脆弱性情報', jpcertNewVulnerabilities));
-  }
 
   // JPCERTからの取得結果をRedmineのチケットに登録
   var isJpcertTicketCreated = false;
   var watchOvers = config['jpcertWatchOvers'].split(',');
 
   jpcertNewHeadsUps.forEach(function(headsUp) {
-    if (getTicketId(headsUp['link'])) {
+    var ticketId = getTicketId(headsUp['link']);
+    if (ticketId) {
+      headsUp['ticketId'] = ticketId;
       return;
     }
     isJpcertTicketCreated = true;
@@ -169,15 +163,20 @@ function watch() {
       return headsUp['title'].match(watchOver);
     });
 
+    var ticket;
     if (isWatchOver) {
-      createTicketForWatchOver('JPCERT', watchedAt, headsUp['title'], headsUp['link']);
+      ticket = createTicketForWatchOver('JPCERT', watchedAt, headsUp['title'], headsUp['link']);
     } else {
-      createTicketForEscalation('JPCERT', watchedAt, headsUp['title'], headsUp['link']);
+      ticket = createTicketForEscalation('JPCERT', watchedAt, headsUp['title'], headsUp['link']);
     }
+
+    headsUp['ticketId'] = ticket['id'];
   });
 
   jpcertNewVulnerabilities.forEach(function(vulnerability) {
-    if (getTicketId(vulnerability['link'])) {
+    var ticketId = getTicketId(vulnerability['link']);
+    if (ticketId) {
+      vulnerability['ticketId'] = ticketId;
       return;
     }
     isJpcertTicketCreated = true;
@@ -186,36 +185,52 @@ function watch() {
       return vulnerability['title'].match(watchOver);
     });
 
+    var ticket;
     if (isWatchOver) {
-      createTicketForWatchOver('JPCERT', watchedAt, vulnerability['title'], vulnerability['link']);
+      ticket = createTicketForWatchOver('JPCERT', watchedAt, vulnerability['title'], vulnerability['link']);
     } else {
-      createTicketForEscalation('JPCERT', watchedAt, vulnerability['title'], vulnerability['link']);
+      ticket = createTicketForEscalation('JPCERT', watchedAt, vulnerability['title'], vulnerability['link']);
     }
+
+    vulnerability['ticketId'] = ticket['id']
   });
 
   if (!isJpcertTicketCreated) {
     createTicketForWhenNotFoundNewVulnerability('JPCERT', watchedAt);
   }
 
-  // ESETからニュースを取得し、通知
-  var esetNewNews = getEsetNewNews(latestWatchedAt);
-  if (esetNewNews.length > 0) {
-    postMessage(slackMessagefy('ESET：ニュース', esetNewNews));
+  // Slackへ通知
+  if (jpcertNewHeadsUps.length > 0) {
+    postMessage(slackMessagefy('JPCERT：注意喚起情報', jpcertNewHeadsUps));
   }
+  if (jpcertNewVulnerabilities.length > 0) {
+    postMessage(slackMessagefy('JPCERT：脆弱性情報', jpcertNewVulnerabilities));
+  }
+
+  // ESETからニュースを取得
+  var esetNewNews = getEsetNewNews(latestWatchedAt);
 
   // ESETからの情報取得結果をRedmineのチケットに登録
   var isEsetTicketCreated = false;
   esetNewNews.forEach(function(news) {
-    if (getTicketId(news['link'])) {
+    var ticketId = getTicketId(news['link']);
+    if (ticketId) {
+      news['ticketId'] = ticketId;
       return;
     }
     isEsetTicketCreated = true;
 
-    createTicketForWatchOver('ESET', watchedAt, news['title'], news['link']);
+    var ticket = createTicketForWatchOver('ESET', watchedAt, news['title'], news['link']);
+    news['ticketId'] = ticket['id'];
   });
 
   if (!isEsetTicketCreated) {
     createTicketForWhenNotFoundNewVulnerability('ESET', watchedAt);
+  }
+
+  // Slackへ通知
+  if (esetNewNews.length > 0) {
+    postMessage(slackMessagefy('ESET：ニュース', esetNewNews));
   }
 
   // JC3から新着情報を取得し、通知
@@ -449,6 +464,10 @@ function slackMessagefy(title, items) {
     var item = items[i];
     result += '<' + item['link'] + '|' + item['title'] + '>' + "\n";
     result += '[' + item['date'] + ']' + "\n";
+    if (item['ticketId']) {
+      var ticketUrl = redmine['url'] + '/issues/' + item['ticketId'];
+      result += '<' + ticketUrl + '|' + 'Redmine' + '>' + "\n";
+    }
     result += "\n";
   }
 
@@ -476,9 +495,11 @@ function postMessage(message) {
  *
  * @param {String} siteName  脆弱性情報・注意喚起情報の取得元
  * @param {Date}   watchedAt 確認日時
+ *
+ * @return {HashMap} 作成したチケット
  */
 function createTicketForWhenNotFoundNewVulnerability(siteName, watchedAt) {
-  createTicket(
+  return createTicket(
     buildTicketSubject(siteName, watchedAt, null),
     '',
     redmine['status']['resolve'],
@@ -495,9 +516,11 @@ function createTicketForWhenNotFoundNewVulnerability(siteName, watchedAt) {
  * @param {Date}   watchedAt          確認日時
  * @param {String} vulnerabilityTitle 脆弱性情報・注意喚起情報のタイトル
  * @param {String} vulnerabilityLink  脆弱性情報・注意喚起情報のURL
+ *
+ * @return {HashMap} 作成したチケット
  */
 function createTicketForWatchOver(siteName, watchedAt, vulnerabilityTitle, vulnerabilityLink) {
-  createTicket(
+  return createTicket(
     buildTicketSubject(siteName, watchedAt, vulnerabilityTitle),
     vulnerabilityLink,
     redmine['status']['resolve'],
@@ -514,9 +537,11 @@ function createTicketForWatchOver(siteName, watchedAt, vulnerabilityTitle, vulne
  * @param {Date}   watchedAt          確認日時
  * @param {String} vulnerabilityTitle 脆弱性情報・注意喚起情報のタイトル
  * @param {String} vulnerabilityLink  脆弱性情報・注意喚起情報のURL
+ *
+ * @return {HashMap} 作成したチケット
  */
 function createTicketForEscalation(siteName, watchedAt, vulnerabilityTitle, vulnerabilityLink) {
-  createTicket(
+  return createTicket(
     buildTicketSubject(siteName, watchedAt, vulnerabilityTitle),
     vulnerabilityLink,
     redmine['status']['new'],
@@ -551,6 +576,8 @@ function buildTicketSubject(sitename, watchedAt, vulnerabilityTitle) {
  * @param {Integer} statusId    チケットのステータスID
  * @param {Integer} categoryId  チケットのカテゴリID
  * @param {Integer} doneRatio   チケットの進捗率
+ *
+ * @return {HashMap} 作成したチケット
  */
 function createTicket(subject, description, statusId, categoryId, doneRatio) {
   var requestBody = {
@@ -578,7 +605,8 @@ function createTicket(subject, description, statusId, categoryId, doneRatio) {
     'payload'     : JSON.stringify(requestBody)
   }
 
-  UrlFetchApp.fetch(redmine['url'] + '/issues.json', options);
+  var response = UrlFetchApp.fetch(redmine['url'] + '/issues.json', options);
+  return JSON.parse(response.getContentText())['issue'];
 }
 
 /**
