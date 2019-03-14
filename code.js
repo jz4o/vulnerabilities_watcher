@@ -240,7 +240,7 @@ function watch() {
   }
 
   // JC3からの情報取得結果をRedmineのチケットに登録
-  if (esetNewNews.length <= 0) {
+  if (jc3NewInformation.length <= 0) {
     createTicketForWhenNotFoundNewVulnerability('JC3', watchedAt);
   }
 
