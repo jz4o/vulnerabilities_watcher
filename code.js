@@ -475,21 +475,6 @@ function slackMessagefy(title, items) {
 }
 
 /**
- * Slackにメッセージを通知.
- *
- * @param {String} 通知内容
- */
-function postMessage(message) {
-  var options = {
-    'method'     : 'post',
-    'contentType': 'application/json',
-    'payload'    : JSON.stringify({ 'text': message })
-  };
-
-  UrlFetchApp.fetch(slackIncomingUrl, options);
-}
-
-/**
  * Redmineにチケットを登録.
  * ※前回確認時以降に新しい脆弱性情報・注意喚起情報が発表されていない場合に使用
  *

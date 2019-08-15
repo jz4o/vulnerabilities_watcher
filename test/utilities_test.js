@@ -93,6 +93,29 @@ function utilitiesTest() {
           assertThat(isHoliday(new Date(currentYear + '/11/23'))).isTrue();
         }
       }
+    },
+    'postMessage': function() {
+      // override UrlFetchApp.fetch
+      UrlFetchApp = {};
+      UrlFetchApp.fetch = function(url, params) {
+        return {
+          'url': url,
+          'params': params
+        };
+      };
+
+      var testMessage = 'message';
+
+      var expect = {
+        'url': slackIncomingUrl,
+        'params': {
+          'method'     : 'post',
+          'contentType': 'application/json',
+          'payload'    : JSON.stringify({ 'text': testMessage })
+        }
+      };
+
+      assertThat(postMessage(testMessage).toString()).is(expect.toString());
     }
   });
 }

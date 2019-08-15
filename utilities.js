@@ -23,3 +23,20 @@ function isHoliday(date) {
   // 土日でも祝日でもない
   return false;
 }
+
+/**
+ * Slackにメッセージを通知.
+ *
+ * @param {String} message 通知内容
+ *
+ * @return {HTTPResponse} 通知結果
+ */
+function postMessage(message) {
+  var options = {
+    'method'     : 'post',
+    'contentType': 'application/json',
+    'payload'    : JSON.stringify({ 'text': message })
+  };
+
+  return UrlFetchApp.fetch(slackIncomingUrl, options);
+}
