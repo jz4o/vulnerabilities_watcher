@@ -106,16 +106,17 @@ function utilitiesTest() {
 
       var testMessage = 'message';
 
-      var expect = {
+      var result = JSON.stringify(postMessage(testMessage));
+      var expect = JSON.stringify({
         'url': slackIncomingUrl,
         'params': {
           'method'     : 'post',
           'contentType': 'application/json',
           'payload'    : JSON.stringify({ 'text': testMessage })
         }
-      };
+      });
 
-      assertThat(postMessage(testMessage).toString()).is(expect.toString());
+      assertThat(result).is(expect);
     }
   });
 }
