@@ -395,6 +395,12 @@ function getJc3NewInformation(latestWatchedAt) {
   // 必要な箇所だけ使用するようにしている
   var response = UrlFetchApp.fetch(jc3Url);
   var NewsAreaSection = response.getContentText().match(/<section class="topNewsArea">[\s\S]*?<\/section>/);
+
+  // HTMLソースが不正な構成になっているため、暫定的対応
+  if (NewsAreaSection == null) {
+    NewsAreaSection = response.getContentText().match(/<section class="topNewsArea">[\s\S]*?\/section/);
+    NewsAreaSection = NewsAreaSection.toString().replace('<!-- /section', '</dl></section>');
+  }
   var xml = XmlService.parse(NewsAreaSection);
 
   // 新着情報を含むElementを取得
