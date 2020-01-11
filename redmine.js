@@ -144,3 +144,68 @@ function getTicketId(vulnerabilityLink) {
     return json['results'][0]['id'];
   }
 }
+
+/**
+ * 不要となったチケットのIDを取得し、呼び出し元に返す.
+ *
+ * 不要チケットの条件：
+ *  * ステータスが解決
+ *  * 最終更新日から猶予期間を経過している
+ *  * 進捗率が100%
+ *
+ *  @return {Array} 不要となったチケットのID
+ */
+function getResolvedTicketIds() {
+  var headers = {
+    'X-Redmine-API-Key': redmine['apiKey']
+  };
+
+  var options = {
+    'method'  : 'get',
+    'headers' : headers
+  }
+
+  var borderDate = new Date();
+  borderDate.setDate(borderDate.getDate() - redmine['marginDaysForResolveToFinish']);
+
+  var searchConditions = [];
+  searchConditions.push('project_id=' + redmine['projectId']);
+  searchConditions.push('status_id=' + redmine['status']['resolve']);
+  searchConditions.push('updated_on=%3C%3D' + Utilities.formatDate(borderDate, 'JST', 'yyyy-MM-dd')); // <=borderDate
+  searchConditions.push('done_ratio=%3E%3D100');                                                      // >=100
+
+  var response = UrlFetchApp.fetch(redmine['url'] + '/issues.json?' + searchConditions.join('&'), options);
+  var json = JSON.parse(response.getContentText());
+
+  var result = [];
+  json['issues'].forEach(function(issue) {
+    result.push(issue['id']);
+  });
+
+  return result;
+}
+
+/**
+ * 不要となったチケットのステータスを終了に更新する.
+ */
+function finishForResolvedTickets() {
+  var requestBody = {
+    'issue': {
+      'status_id': redmine['status']['finish'],
+      'notes'    : '解決済チケットを終了（スクリプトによる自動終了）'
+    }
+  }
+  var headers = {
+    'X-Redmine-API-Key': redmine['apiKey']
+  };
+  var options = {
+    'method'      : 'put',
+    'contentType' : 'application/json',
+    'headers'     : headers,
+    'payload'     : JSON.stringify(requestBody)
+  };
+
+  getResolvedTicketIds().forEach(function(ticketId) {
+    UrlFetchApp.fetch(redmine['url'] + '/issues/' + ticketId + '.json', options);
+  });
+}
