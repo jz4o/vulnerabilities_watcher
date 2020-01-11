@@ -22,7 +22,8 @@ var redmine = {
   },
   'status' : {
     'new'     : scriptProperties.getProperty('REDMINE_STATUS_NEW_ID'),
-    'resolve' : scriptProperties.getProperty('REDMINE_STATUS_RESOLVE_ID')
+    'resolve' : scriptProperties.getProperty('REDMINE_STATUS_RESOLVE_ID'),
+    'finish'  : scriptProperties.getProperty('REDMINE_STATUS_FINISH_ID')
   },
   'priority' : {
     'normal' : scriptProperties.getProperty('REDMINE_PRIORITY_NORMAL_ID')
@@ -31,7 +32,8 @@ var redmine = {
     'vulnerabilityNothing' : scriptProperties.getProperty('REDMINE_CATEGORY_VULNERABILITY_NOTHING_ID'),
     'watchOver'            : scriptProperties.getProperty('REDMINE_CATEGORY_WATCH_OVER_ID'),
     'escalation'           : scriptProperties.getProperty('REDMINE_CATEGORY_ESCALATION_ID')
-  }
+  },
+  'marginDaysForResolveToFinish': scriptProperties.getProperty('REDMINE_MARGIN_DAYS_FOR_RESOLVE_TO_FINISH')
 };
 
 // セットアップ.
