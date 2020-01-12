@@ -237,13 +237,26 @@ function watch() {
 
   // JC3から新着情報を取得し、通知
   var jc3NewInformation = getJc3NewInformation(latestWatchedAt);
-  if (jc3NewInformation.length > 0) {
-    postMessage(slackMessagefy('JC3：新着情報', jc3NewInformation));
+  var isJc3TicketCreated = false;
+  jc3NewInformation.forEach(function(information) {
+    var ticketId = getTicketId(information['link']);
+    if (ticketId) {
+      information['ticketId'] = ticketId;
+      return;
+    }
+    isJc3TicketCreated = true;
+
+    var ticket = createTicketForWatchOver('JC3', watchedAt, information['title'], information['link']);
+    information['ticketId'] = ticket['id']
+  });
+
+  if (!isJc3TicketCreated) {
+    createTicketForWhenNotFoundNewVulnerability('JC3', watchedAt);
   }
 
-  // JC3からの情報取得結果をRedmineのチケットに登録
-  if (jc3NewInformation.length <= 0) {
-    createTicketForWhenNotFoundNewVulnerability('JC3', watchedAt);
+  // Slackへ通知
+  if (jc3NewInformation.length > 0) {
+    postMessage(slackMessagefy('JC3：新着情報', jc3NewInformation));
   }
 
   // 前回確認日時を更新
