@@ -416,6 +416,10 @@ function getJc3NewInformation(latestWatchedAt) {
     NewsAreaSection = response.getContentText().match(/<section class="topNewsArea">[\s\S]*?\/section/);
     NewsAreaSection = NewsAreaSection.toString().replace('<!-- /section', '</dl></section>');
   }
+
+  // <br> は XMLService によるパースでエラーが発生するため置換
+  NewsAreaSection = NewsAreaSection.toString().replace(/\<br\>/g, '<br />');
+
   var xml = XmlService.parse(NewsAreaSection);
 
   // 新着情報を含むElementを取得
