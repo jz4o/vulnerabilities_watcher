@@ -417,8 +417,9 @@ function getJc3NewInformation(latestWatchedAt) {
     NewsAreaSection = NewsAreaSection.toString().replace('<!-- /section', '</dl></section>');
   }
 
-  // <br> は XMLService によるパースでエラーが発生するため置換
+  // XMLService によるパースでエラーが発生する箇所をパース可能な形に置換
   NewsAreaSection = NewsAreaSection.toString().replace(/\<br\>/g, '<br />');
+  NewsAreaSection = NewsAreaSection.toString().replace(/<\/dd(?!>)/g, '<\/dd>');
 
   var xml = XmlService.parse(NewsAreaSection);
 
