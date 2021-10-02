@@ -1,0 +1,21 @@
+{
+  "name": "vulnerabilities_watcher",
+  "version": "1.0.0",
+  "description": "vulnerabilities_watcher is bot that watch to several site for vulnerabilities.",
+  "main": "code.js",
+  "dependencies": {},
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jz4o/vulnerabilities_watcher.git"
+  },
+  "author": "jz4o",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jz4o/vulnerabilities_watcher/issues"
+  },
+  "homepage": "https://github.com/jz4o/vulnerabilities_watcher#readme"
+}
