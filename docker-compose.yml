@@ -1,0 +1,19 @@
+version: '3.8'
+volumes:
+  node_modules:
+    driver: local
+services:
+  clasp:
+    build:
+      context: ./
+      dockerfile: dockerfiles/clasp/Dockerfile
+    volumes:
+      - .:/usr/src
+
+      # not sync directories
+      - node_modules:/usr/src/node_modules
+    environment:
+      TZ: Asia/Tokyo
+      LANG: en_US.UTF-8
+    working_dir: /usr/src
+    tty: true
