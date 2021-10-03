@@ -409,54 +409,16 @@ function getJc3NewInformation(latestWatchedAt) {
   // ※HTMLソース全体を使用するとXmlServiceによるパースでエラーが発生するため、
   // 必要な箇所だけ使用するようにしている
   var response = UrlFetchApp.fetch(jc3Url);
-  var NewsAreaSection = response.getContentText().match(/<section class="topNewsArea">[\s\S]*?<\/section>/);
+  var newsAreaSection = response.getContentText().match(/<label class="tab-label TAB-02" for="TAB-02">脅威情報<\/label>\s*(<div[\s\S]*?<\/div>)/)[1];
 
-  // HTMLソースが不正な構成になっているため、暫定的対応
-  if (NewsAreaSection == null) {
-    NewsAreaSection = response.getContentText().match(/<section class="topNewsArea">[\s\S]*?\/section/);
-    NewsAreaSection = NewsAreaSection.toString().replace('<!-- /section', '</dl></section>');
-  }
-
-  // XMLService によるパースでエラーが発生する箇所をパース可能な形に置換
-  NewsAreaSection = NewsAreaSection.toString().replace(/\<br\>/g, '<br />');
-  NewsAreaSection = NewsAreaSection.toString().replace(/<\/dd(?!>)/g, '<\/dd>');
-
-  var xml = XmlService.parse(NewsAreaSection);
-
-  // 新着情報を含むElementを取得
-  var newsListElement = xml.getRootElement().getChild('dl'); // 新着情報部分の親Element
-  var newsDates  = newsListElement.getChildren('dt');        // 発表時刻
-  var newsDescriptions = newsListElement.getChildren('dd');  // 内容
-
-  // 発表時刻の数と内容の数が異なる場合は取得失敗
-  if (newsDates.length != newsDescriptions.length) {
-    errorMsg = 'JC3の情報取得に失敗しました';
-    Logger.log(errorMsg);
-    postMessage(errorMsg);
-
-    return result;
-  }
+  var xml = XmlService.parse(newsAreaSection);
+  var newsDescriptions = xml.getRootElement().getChildren('article');
 
   // 新着情報から条件に該当するデータを取得
   for (var i = 0; i < newsDescriptions.length; i++) {
-    var newsDescription = newsDescriptions[i].getText().replace(/\s+$/, '');
-    var date = new Date(newsDates[i].getText().split(/年|月|日/, 3).join('/') + ' 23:59:59');
-
-    // JC3の会員に関する情報は除外
-    if (newsDescription.match(/^賛助会員/)) {
-      continue;
-    }
-
-    // JC3に関する情報は除外
-    if (newsDescription.match(/^当法人が/)) {
-      continue;
-    }
-
-    // 詳細情報を提示していない情報は除外
-    if (!newsDescriptions[i].getChild('ul')) {
-      continue;
-    }
-    var link = jc3Url + newsDescriptions[i].getChild('ul').getChild('li').getChild('a').getAttribute('href').getValue();
+    var newsDescription = newsDescriptions[i].getChild('h3').getText();
+    var date = new Date(newsDescriptions[i].getChild('ul').getChild('li').getText().split('.').join('/') + ' 23:59:59');
+    var link = jc3Url + newsDescriptions[i].getChild('p').getChild('a').getAttribute('href').getValue();
 
     // 確認済みの情報は除外
     if (date.getTime() <= latestWatchedAtTime) {
