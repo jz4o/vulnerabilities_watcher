@@ -409,9 +409,9 @@ function getJc3NewInformation(latestWatchedAt) {
   // ※HTMLソース全体を使用するとXmlServiceによるパースでエラーが発生するため、
   // 必要な箇所だけ使用するようにしている
   var response = UrlFetchApp.fetch(jc3Url);
-  var NewsAreaSection = response.getContentText().match(/<label class="tab-label TAB-02" for="TAB-02">脅威情報<\/label>\s*(<div[\s\S]*?<\/div>)/)[1];
+  var newsAreaSection = response.getContentText().match(/<label class="tab-label TAB-02" for="TAB-02">脅威情報<\/label>\s*(<div[\s\S]*?<\/div>)/)[1];
 
-  var xml = XmlService.parse(NewsAreaSection);
+  var xml = XmlService.parse(newsAreaSection);
   var newsDescriptions = xml.getRootElement().getChildren('article');
 
   // 新着情報から条件に該当するデータを取得
