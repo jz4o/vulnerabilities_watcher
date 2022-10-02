@@ -33,7 +33,8 @@ var redmine = {
     'watchOver'            : scriptProperties.getProperty('REDMINE_CATEGORY_WATCH_OVER_ID'),
     'escalation'           : scriptProperties.getProperty('REDMINE_CATEGORY_ESCALATION_ID')
   },
-  'marginDaysForResolveToFinish': scriptProperties.getProperty('REDMINE_MARGIN_DAYS_FOR_RESOLVE_TO_FINISH')
+  'marginDaysForResolveToFinish': scriptProperties.getProperty('REDMINE_MARGIN_DAYS_FOR_RESOLVE_TO_FINISH'),
+  'isCreateTicket': scriptProperties.getProperty('REDMINE_IS_CREATE_TICKET') == 'true'
 };
 
 // セットアップ.
@@ -150,55 +151,57 @@ function watch() {
   var jpcertNewVulnerabilities = getJpcertNewVulnerabilities(latestWatchedAt);
 
   // JPCERTからの取得結果をRedmineのチケットに登録
-  var isJpcertTicketCreated = false;
-  var watchOvers = config['jpcertWatchOvers'].split(',');
+  if (redmine['isCreateTicket']) {
+    var isJpcertTicketCreated = false;
+    var watchOvers = config['jpcertWatchOvers'].split(',');
 
-  jpcertNewHeadsUps.forEach(function(headsUp) {
-    var ticketId = getTicketId(headsUp['link']);
-    if (ticketId) {
-      headsUp['ticketId'] = ticketId;
-      return;
-    }
-    isJpcertTicketCreated = true;
+    jpcertNewHeadsUps.forEach(function(headsUp) {
+      var ticketId = getTicketId(headsUp['link']);
+      if (ticketId) {
+        headsUp['ticketId'] = ticketId;
+        return;
+      }
+      isJpcertTicketCreated = true;
 
-    var isWatchOver = watchOvers.some(function(watchOver) {
-      return headsUp['title'].match(watchOver);
+      var isWatchOver = watchOvers.some(function(watchOver) {
+        return headsUp['title'].match(watchOver);
+      });
+
+      var ticket;
+      if (isWatchOver) {
+        ticket = createTicketForWatchOver('JPCERT', watchedAt, headsUp['title'], headsUp['link']);
+      } else {
+        ticket = createTicketForEscalation('JPCERT', watchedAt, headsUp['title'], headsUp['link']);
+      }
+
+      headsUp['ticketId'] = ticket['id'];
     });
 
-    var ticket;
-    if (isWatchOver) {
-      ticket = createTicketForWatchOver('JPCERT', watchedAt, headsUp['title'], headsUp['link']);
-    } else {
-      ticket = createTicketForEscalation('JPCERT', watchedAt, headsUp['title'], headsUp['link']);
-    }
+    jpcertNewVulnerabilities.forEach(function(vulnerability) {
+      var ticketId = getTicketId(vulnerability['link']);
+      if (ticketId) {
+        vulnerability['ticketId'] = ticketId;
+        return;
+      }
+      isJpcertTicketCreated = true;
 
-    headsUp['ticketId'] = ticket['id'];
-  });
+      var isWatchOver = watchOvers.some(function(watchOver) {
+        return vulnerability['title'].match(watchOver);
+      });
 
-  jpcertNewVulnerabilities.forEach(function(vulnerability) {
-    var ticketId = getTicketId(vulnerability['link']);
-    if (ticketId) {
-      vulnerability['ticketId'] = ticketId;
-      return;
-    }
-    isJpcertTicketCreated = true;
+      var ticket;
+      if (isWatchOver) {
+        ticket = createTicketForWatchOver('JPCERT', watchedAt, vulnerability['title'], vulnerability['link']);
+      } else {
+        ticket = createTicketForEscalation('JPCERT', watchedAt, vulnerability['title'], vulnerability['link']);
+      }
 
-    var isWatchOver = watchOvers.some(function(watchOver) {
-      return vulnerability['title'].match(watchOver);
+      vulnerability['ticketId'] = ticket['id']
     });
 
-    var ticket;
-    if (isWatchOver) {
-      ticket = createTicketForWatchOver('JPCERT', watchedAt, vulnerability['title'], vulnerability['link']);
-    } else {
-      ticket = createTicketForEscalation('JPCERT', watchedAt, vulnerability['title'], vulnerability['link']);
+    if (!isJpcertTicketCreated) {
+      createTicketForWhenNotFoundNewVulnerability('JPCERT', watchedAt);
     }
-
-    vulnerability['ticketId'] = ticket['id']
-  });
-
-  if (!isJpcertTicketCreated) {
-    createTicketForWhenNotFoundNewVulnerability('JPCERT', watchedAt);
   }
 
   // Slackへ通知
@@ -213,21 +216,23 @@ function watch() {
   var esetNewNews = getEsetNewNews(latestWatchedAt);
 
   // ESETからの情報取得結果をRedmineのチケットに登録
-  var isEsetTicketCreated = false;
-  esetNewNews.forEach(function(news) {
-    var ticketId = getTicketId(news['link']);
-    if (ticketId) {
-      news['ticketId'] = ticketId;
-      return;
+  if (redmine['isCreateTicket']) {
+    var isEsetTicketCreated = false;
+    esetNewNews.forEach(function(news) {
+      var ticketId = getTicketId(news['link']);
+      if (ticketId) {
+        news['ticketId'] = ticketId;
+        return;
+      }
+      isEsetTicketCreated = true;
+
+      var ticket = createTicketForWatchOver('ESET', watchedAt, news['title'], news['link']);
+      news['ticketId'] = ticket['id'];
+    });
+
+    if (!isEsetTicketCreated) {
+      createTicketForWhenNotFoundNewVulnerability('ESET', watchedAt);
     }
-    isEsetTicketCreated = true;
-
-    var ticket = createTicketForWatchOver('ESET', watchedAt, news['title'], news['link']);
-    news['ticketId'] = ticket['id'];
-  });
-
-  if (!isEsetTicketCreated) {
-    createTicketForWhenNotFoundNewVulnerability('ESET', watchedAt);
   }
 
   // Slackへ通知
@@ -235,23 +240,27 @@ function watch() {
     postMessage(slackMessagefy('ESET：ニュース', esetNewNews));
   }
 
-  // JC3から新着情報を取得し、通知
+  // JC3から新着情報を取得
   var jc3NewInformation = getJc3NewInformation(latestWatchedAt);
-  var isJc3TicketCreated = false;
-  jc3NewInformation.forEach(function(information) {
-    var ticketId = getTicketId(information['link']);
-    if (ticketId) {
-      information['ticketId'] = ticketId;
-      return;
+
+  // JC3からの情報取得結果をRedmineのチケットに登録
+  if (redmine['isCreateTicket']) {
+    var isJc3TicketCreated = false;
+    jc3NewInformation.forEach(function(information) {
+      var ticketId = getTicketId(information['link']);
+      if (ticketId) {
+        information['ticketId'] = ticketId;
+        return;
+      }
+      isJc3TicketCreated = true;
+
+      var ticket = createTicketForWatchOver('JC3', watchedAt, information['title'], information['link']);
+      information['ticketId'] = ticket['id']
+    });
+
+    if (!isJc3TicketCreated) {
+      createTicketForWhenNotFoundNewVulnerability('JC3', watchedAt);
     }
-    isJc3TicketCreated = true;
-
-    var ticket = createTicketForWatchOver('JC3', watchedAt, information['title'], information['link']);
-    information['ticketId'] = ticket['id']
-  });
-
-  if (!isJc3TicketCreated) {
-    createTicketForWhenNotFoundNewVulnerability('JC3', watchedAt);
   }
 
   // Slackへ通知
