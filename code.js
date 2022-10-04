@@ -159,6 +159,7 @@ function watch() {
       var ticketId = getTicketId(headsUp['link']);
       if (ticketId) {
         headsUp['ticketId'] = ticketId;
+        headsUp['isUpdate'] = true;
         return;
       }
       isJpcertTicketCreated = true;
@@ -181,6 +182,7 @@ function watch() {
       var ticketId = getTicketId(vulnerability['link']);
       if (ticketId) {
         vulnerability['ticketId'] = ticketId;
+        vulnerability['isUpdate'] = true;
         return;
       }
       isJpcertTicketCreated = true;
@@ -222,6 +224,7 @@ function watch() {
       var ticketId = getTicketId(news['link']);
       if (ticketId) {
         news['ticketId'] = ticketId;
+        news['isUpdate'] = true;
         return;
       }
       isEsetTicketCreated = true;
@@ -250,6 +253,7 @@ function watch() {
       var ticketId = getTicketId(information['link']);
       if (ticketId) {
         information['ticketId'] = ticketId;
+        information['isUpdate'] = true;
         return;
       }
       isJc3TicketCreated = true;
@@ -459,6 +463,7 @@ function slackMessagefy(title, items) {
   result += '>>>\n';
   for (var i = 0; i < items.length; i++) {
     var item = items[i];
+    result += item['isUpdate'] ? '更新： ' : '新規： ';
     result += '<' + item['link'] + '|' + item['title'] + '>' + "\n";
     result += '[' + item['date'] + ']' + "\n";
     if (item['ticketId']) {
