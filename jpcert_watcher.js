@@ -7,7 +7,7 @@ class JpcertWatcher extends Watcher {
     // JPCERTからの取得結果をRedmineのチケットに登録
     if (redmine['isCreateTicket']) {
       var isJpcertTicketCreated = false;
-      var watchOvers = config['jpcertWatchOvers'].split(',');
+      var watchOvers = config['jpcertWatchOvers'].split(/,|\n/);
 
       jpcertNewHeadsUps.forEach(function(headsUp) {
         var ticketId = getTicketId(headsUp['link']);
