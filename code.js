@@ -146,7 +146,7 @@ function watch() {
     return;
   }
 
-  var watchers = [EsetWatcher, Jc3Watcher, JpcertWatcher];
+  var watchers = [EsetWatcher, Jc3Watcher, JpcertWatcher, WindowsForestWatcher];
   watchers.forEach(watcher => {
     watcher.watch(latestWatchedAt);
   });
