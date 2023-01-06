@@ -15,12 +15,12 @@ class Jc3Watcher extends Watcher {
         }
         isJc3TicketCreated = true;
 
-        var ticket = createTicketForWatchOver('JC3', watchedAt, information['title'], information['link']);
+        var ticket = createTicketForWatchOver('JC3', latestWatchedAt, information['title'], information['link']);
         information['ticketId'] = ticket['id']
       });
 
       if (!isJc3TicketCreated) {
-        createTicketForWhenNotFoundNewVulnerability('JC3', watchedAt);
+        createTicketForWhenNotFoundNewVulnerability('JC3', latestWatchedAt);
       }
     }
 
