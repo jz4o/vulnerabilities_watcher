@@ -15,12 +15,12 @@ class EsetWatcher extends Watcher {
         }
         isEsetTicketCreated = true;
 
-        var ticket = createTicketForWatchOver('ESET', watchedAt, news['title'], news['link']);
+        var ticket = createTicketForWatchOver('ESET', latestWatchedAt, news['title'], news['link']);
         news['ticketId'] = ticket['id'];
       });
 
       if (!isEsetTicketCreated) {
-        createTicketForWhenNotFoundNewVulnerability('ESET', watchedAt);
+        createTicketForWhenNotFoundNewVulnerability('ESET', latestWatchedAt);
       }
     }
 

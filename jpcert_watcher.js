@@ -24,9 +24,9 @@ class JpcertWatcher extends Watcher {
 
         var ticket;
         if (isWatchOver) {
-          ticket = createTicketForWatchOver('JPCERT', watchedAt, headsUp['title'], headsUp['link']);
+          ticket = createTicketForWatchOver('JPCERT', latestWatchedAt, headsUp['title'], headsUp['link']);
         } else {
-          ticket = createTicketForEscalation('JPCERT', watchedAt, headsUp['title'], headsUp['link']);
+          ticket = createTicketForEscalation('JPCERT', latestWatchedAt, headsUp['title'], headsUp['link']);
         }
 
         headsUp['ticketId'] = ticket['id'];
@@ -47,16 +47,16 @@ class JpcertWatcher extends Watcher {
 
         var ticket;
         if (isWatchOver) {
-          ticket = createTicketForWatchOver('JPCERT', watchedAt, vulnerability['title'], vulnerability['link']);
+          ticket = createTicketForWatchOver('JPCERT', latestWatchedAt, vulnerability['title'], vulnerability['link']);
         } else {
-          ticket = createTicketForEscalation('JPCERT', watchedAt, vulnerability['title'], vulnerability['link']);
+          ticket = createTicketForEscalation('JPCERT', latestWatchedAt, vulnerability['title'], vulnerability['link']);
         }
 
         vulnerability['ticketId'] = ticket['id']
       });
 
       if (!isJpcertTicketCreated) {
-        createTicketForWhenNotFoundNewVulnerability('JPCERT', watchedAt);
+        createTicketForWhenNotFoundNewVulnerability('JPCERT', latestWatchedAt);
       }
     }
 
