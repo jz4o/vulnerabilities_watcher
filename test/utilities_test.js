@@ -1,5 +1,5 @@
 function utilitiesTest() {
-  var currentYear = new Date().getYear();
+  var currentYear = new Date().getFullYear();
   var dateInt = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
 
   exports({
