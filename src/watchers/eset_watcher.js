@@ -43,7 +43,12 @@ class EsetWatcher extends Watcher {
 
     // rssを取得
     var response = UrlFetchApp.fetch('https://eset-info.canon-its.jp/rss/data_format=xml&xml_media_nm=malware');
-    var xml = XmlService.parse(response.getContentText());
+    var responseContentText = response.getContentText();
+
+    // linkの開始タグがない問題の暫定対応
+    responseContentText = responseContentText.replaceAll(/(?<!<link>)(http.*?)(?=<\/link>)/g, '<link>$1');
+
+    var xml = XmlService.parse(responseContentText);
 
     // rssに含まれるitemから条件に該当するデータを取得
     var items = xml.getRootElement().getChild('channel').getChildren('item');
