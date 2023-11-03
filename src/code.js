@@ -148,7 +148,12 @@ function watch() {
 
   var watchers = [EsetWatcher, Jc3Watcher, JpcertWatcher, WindowsForestWatcher];
   watchers.forEach(watcher => {
-    watcher.watch(latestWatchedAt);
+    try {
+      watcher.watch(latestWatchedAt);
+    } catch(e) {
+      const errorMessage = `Error: ${watcher.name}\n${e.stack}`;
+      postMessage(errorMessage);
+    }
   });
 
   // 前回確認日時を更新
