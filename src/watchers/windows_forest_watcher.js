@@ -43,7 +43,7 @@ class WindowsForestWatcher extends Watcher {
 
     // 窓の杜のHTMLソースを取得
     var response = UrlFetchApp.fetch('https://forest.watch.impress.co.jp/category/security/');
-    var articleSource = response.getContentText().match(/<section class="list">.*?(<ul class="list-02">.*?<\/ul>).*?<\/section>/)[1].replace(/<img.*?>/g, '');
+    var articleSource = response.getContentText().match(/<section class="list">.*?(<ul class="list-02">.*?<\/ul>).*?<\/section>/)[1].replace(/<img.*?>/g, '').replace(/&(?!amp;)/g, '&amp;');
 
     var xml = XmlService.parse(articleSource);
     var articles = xml.getRootElement().getChildren('li');
