@@ -37,9 +37,6 @@ var redmine = {
   'isCreateTicket': scriptProperties.getProperty('REDMINE_IS_CREATE_TICKET') == 'true'
 };
 
-// セットアップ.
-setup();
-
 /**
  * 各シートおよびconfigの初期化処理.
  */
@@ -80,9 +77,10 @@ function setupConfig() {
   config = getConfig();
 
   // 設定内容のデフォルト値
-  var configDefaultValues = {
-    'latestWatchedAt': new Date(0)
-  }
+  var configDefaultValues = {};
+  getWatcherClasses().forEach(watcher => {
+    configDefaultValues[`${watcher.name}LatestWatchedAt`] = new Date(0);
+  });
 
   // 設定されていない項目にデフォルト値をセット
   for (key in configDefaultValues) {
@@ -131,12 +129,16 @@ function updateConfigSheet() {
   configSheet.getRange(1, 1, data.length, 2).setValues(data);
 }
 
+function getWatcherClasses() {
+  return [EsetWatcher, Jc3Watcher, JpcertWatcher, WindowsForestWatcher];
+}
+
 /**
  * 脆弱性情報・注意喚起情報をチェック
  */
 function watch() {
-  // 前回確認日時
-  var latestWatchedAt = config['latestWatchedAt'];
+  // セットアップ.
+  setup();
 
   // 今回確認日時
   var watchedAt = new Date();
@@ -146,17 +148,20 @@ function watch() {
     return;
   }
 
-  var watchers = [EsetWatcher, Jc3Watcher, JpcertWatcher, WindowsForestWatcher];
-  watchers.forEach(watcher => {
+  getWatcherClasses().forEach(watcher => {
     try {
+      // 前回確認日時
+      const latestWatchedAt = config[`${watcher.name}LatestWatchedAt`];
+
       watcher.watch(latestWatchedAt);
+
+      // 前回確認日時を更新
+      config[`${watcher.name}LatestWatchedAt`] = watchedAt;
     } catch(e) {
       const errorMessage = `Error: ${watcher.name}\n${e.stack}`;
       postMessage(errorMessage);
     }
   });
 
-  // 前回確認日時を更新
-  config['latestWatchedAt'] = watchedAt;
   updateConfigSheet();
 }
