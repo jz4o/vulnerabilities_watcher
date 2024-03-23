@@ -12,13 +12,15 @@ class Watcher {
    * @return {String} 脆弱性情報・注意喚起情報(Slack通知用)
    */
   static slackMessagefy(title, items) {
+    var tz = Session.getScriptTimeZone();
+
     var result = title + '\n\n';
     result += '>>>\n';
     for (var i = 0; i < items.length; i++) {
       var item = items[i];
       result += item['isUpdate'] ? '更新： ' : '新規： ';
       result += '<' + item['link'] + '|' + item['title'] + '>' + "\n";
-      result += '[' + item['date'] + ']' + "\n";
+      result += Utilities.formatDate(item['date'], tz, 'yyyy/MM/dd HH:mm:ss') + "\n";
       if (item['ticketId']) {
         var ticketUrl = redmine['url'] + '/issues/' + item['ticketId'];
         result += '<' + ticketUrl + '|' + 'Redmine' + '>' + "\n";
