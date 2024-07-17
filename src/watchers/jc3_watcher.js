@@ -54,9 +54,9 @@ class Jc3Watcher extends Watcher {
 
     // 新着情報から条件に該当するデータを取得
     for (var i = 0; i < newsDescriptions.length; i++) {
-      var newsDescription = newsDescriptions[i].getChild('h3').getText();
+      var newsDescription = newsDescriptions[i].getChild('h3').getValue();
       var date = new Date(newsDescriptions[i].getChild('ul').getChild('li').getText().split('.').join('/') + ' 23:59:59');
-      var link = jc3Url + newsDescriptions[i].getChild('h3').getChild('a').getAttribute('href').getValue();
+      var link = newsDescriptions[i].getChild('h3').getChild('a').getAttribute('href').getValue();
 
       // 確認済みの情報は除外
       if (date.getTime() <= latestWatchedAtTime) {
