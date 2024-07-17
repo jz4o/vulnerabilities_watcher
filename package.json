@@ -4,7 +4,7 @@
   "description": "vulnerabilities_watcher is bot that watch to several site for vulnerabilities.",
   "main": "code.js",
   "dependencies": {
-    "@google/clasp": "^2.4.1"
+    "@google/clasp": "2.4.2"
   },
   "devDependencies": {},
   "scripts": {
