@@ -5,7 +5,6 @@ export default [
   js.configs.recommended,
   {
     'ignores': [
-      'src/utilities.js',
       'src/watcher.js',
     ]
   },
