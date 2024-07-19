@@ -5,7 +5,6 @@ export default [
   js.configs.recommended,
   {
     'ignores': [
-      'src/watchers/jc3_watcher.js',
       'src/watchers/jpcert_watcher.js',
       'src/watchers/windows_forest_watcher.js',
       'src/code.js',
