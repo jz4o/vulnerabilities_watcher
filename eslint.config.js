@@ -5,7 +5,6 @@ export default [
   js.configs.recommended,
   {
     'ignores': [
-      'src/watchers/windows_forest_watcher.js',
       'src/code.js',
       'src/redmine.js',
       'src/utilities.js',

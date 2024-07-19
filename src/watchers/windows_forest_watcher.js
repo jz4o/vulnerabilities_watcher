@@ -1,13 +1,13 @@
 class WindowsForestWatcher extends Watcher {
   static watch(latestWatchedAt) {
     // 窓の杜から記事を取得
-    var articles = this.getWindowsForestSecurityArticles(latestWatchedAt);
+    const articles = this.getWindowsForestSecurityArticles(latestWatchedAt);
 
     // 窓の杜からの情報取得結果をRedmineのチケットに登録
     if (redmine['isCreateTicket']) {
-      var isTicketCreated = false;
+      let isTicketCreated = false;
       articles.forEach(function(article) {
-        var ticketId = getTicketId(article['link']);
+        const ticketId = getTicketId(article['link']);
         if (ticketId) {
           article['ticketId'] = ticketId;
           article['isUpdate'] = true;
@@ -15,7 +15,7 @@ class WindowsForestWatcher extends Watcher {
         }
         isTicketCreated = true;
 
-        var ticket = createTicketForWatchOver('窓の杜', latestWatchedAt, article['title'], article['link']);
+        const ticket = createTicketForWatchOver('窓の杜', latestWatchedAt, article['title'], article['link']);
         article['ticketId'] = ticket['id'];
       });
 
@@ -38,43 +38,58 @@ class WindowsForestWatcher extends Watcher {
    * @return {Array(HashMap)} セキュリティ関連記事
    */
   static getWindowsForestSecurityArticles(latestWatchedAt) {
-    var result = [];
-    var latestWatchedAtTime = latestWatchedAt.getTime();
+    const latestWatchedAtTime = latestWatchedAt.getTime();
 
     // 窓の杜のHTMLソースを取得
-    var response = UrlFetchApp.fetch('https://forest.watch.impress.co.jp/category/security/');
-    var articleSource = response.getContentText().match(/<section class="list">.*?(<ul class="list-02">.*?<\/ul>).*?<\/section>/)[1].replace(/<img.*?>/g, '').replace(/&(?!amp;)/g, '&amp;');
+    const response = UrlFetchApp.fetch('https://forest.watch.impress.co.jp/category/security/');
+    const articleRegexp = /<section class="list">.*?(<ul class="list-02">.*?<\/ul>).*?<\/section>/;
+    const articleSource = response
+      .getContentText()
+      .match(articleRegexp)[1]
+      .replace(/<img.*?>/g, '')
+      .replace(/&(?!amp;)/g, '&amp;');
 
-    var xml = XmlService.parse(articleSource);
-    var articles = xml.getRootElement().getChildren('li');
+    const xml = XmlService.parse(articleSource);
+    const articles = xml.getRootElement().getChildren('li');
 
     // 新着情報から条件に該当するデータを取得
-    for (var i = 0; i < articles.length; i++) {
-      if (articles[i].getAttribute('class').getValue().split(' ').includes('ad')) {
-        continue;
+    const results = articles.map(article => {
+      if (article.getAttribute('class').getValue().split(' ').includes('ad')) {
+        return;
       }
 
-      var textDivChildren = articles[i].getChild('div').getChildren('div').find(child => child.getAttribute('class').getValue() === 'text').getChildren('p');
-      var titleAnchor = textDivChildren.find(child => child.getAttribute('class').getValue() === 'title').getChild('a');
+      const textDivChildren = article
+        .getChild('div')
+        .getChildren('div')
+        .find(child => child.getAttribute('class').getValue() === 'text')
+        .getChildren('p');
+      const titleAnchor = textDivChildren
+        .find(child => child.getAttribute('class').getValue() === 'title')
+        .getChild('a');
 
-      var link = titleAnchor.getAttribute('href').getValue();
-      var title = titleAnchor.getText();
-      var date = new Date(textDivChildren.find(child => child.getAttribute('class').getValue() === 'date').getValue().replace(/\(|\)/g, '') + ' 23:59:59');
+      const dateStr = textDivChildren
+        .find(child => child.getAttribute('class').getValue() === 'date')
+        .getValue()
+        .replace(/\(|\)/g, '');
+
+      const link = titleAnchor.getAttribute('href').getValue();
+      const title = titleAnchor.getText();
+      const date = new Date(dateStr + ' 23:59:59');
 
       // 確認済みの情報は除外
       if (date.getTime() <= latestWatchedAtTime) {
-        continue;
+        return;
       }
 
-      var item = {
+      const item = {
         'title' : title,
         'link'  : link,
         'date'  : date
       };
 
-      result.push(item);
-    }
+      return item;
+    }).filter(result => result);
 
-    return result;
+    return results;
   }
 }
