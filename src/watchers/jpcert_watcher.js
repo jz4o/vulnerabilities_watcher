@@ -1,16 +1,16 @@
 class JpcertWatcher extends Watcher {
   static watch(latestWatchedAt) {
     // JPCERTから注意喚起情報・脆弱性情報を取得
-    var jpcertNewHeadsUps = this.getJpcertNewHeadsUp(latestWatchedAt);
-    var jpcertNewVulnerabilities = this.getJpcertNewVulnerabilities(latestWatchedAt);
+    const jpcertNewHeadsUps = this.getJpcertNewHeadsUp(latestWatchedAt);
+    const jpcertNewVulnerabilities = this.getJpcertNewVulnerabilities(latestWatchedAt);
 
     // JPCERTからの取得結果をRedmineのチケットに登録
     if (redmine['isCreateTicket']) {
-      var isJpcertTicketCreated = false;
-      var watchOvers = config['jpcertWatchOvers'].split(/,|\n/);
+      let isJpcertTicketCreated = false;
+      const watchOvers = config['jpcertWatchOvers'].split(/,|\n/);
 
       jpcertNewHeadsUps.forEach(function(headsUp) {
-        var ticketId = getTicketId(headsUp['link']);
+        const ticketId = getTicketId(headsUp['link']);
         if (ticketId) {
           headsUp['ticketId'] = ticketId;
           headsUp['isUpdate'] = true;
@@ -18,11 +18,11 @@ class JpcertWatcher extends Watcher {
         }
         isJpcertTicketCreated = true;
 
-        var isWatchOver = watchOvers.some(function(watchOver) {
+        const isWatchOver = watchOvers.some(function(watchOver) {
           return headsUp['title'].match(watchOver);
         });
 
-        var ticket;
+        let ticket;
         if (isWatchOver) {
           ticket = createTicketForWatchOver('JPCERT', latestWatchedAt, headsUp['title'], headsUp['link']);
         } else {
@@ -33,7 +33,7 @@ class JpcertWatcher extends Watcher {
       });
 
       jpcertNewVulnerabilities.forEach(function(vulnerability) {
-        var ticketId = getTicketId(vulnerability['link']);
+        const ticketId = getTicketId(vulnerability['link']);
         if (ticketId) {
           vulnerability['ticketId'] = ticketId;
           vulnerability['isUpdate'] = true;
@@ -41,18 +41,18 @@ class JpcertWatcher extends Watcher {
         }
         isJpcertTicketCreated = true;
 
-        var isWatchOver = watchOvers.some(function(watchOver) {
+        const isWatchOver = watchOvers.some(function(watchOver) {
           return vulnerability['title'].match(watchOver);
         });
 
-        var ticket;
+        let ticket;
         if (isWatchOver) {
           ticket = createTicketForWatchOver('JPCERT', latestWatchedAt, vulnerability['title'], vulnerability['link']);
         } else {
           ticket = createTicketForEscalation('JPCERT', latestWatchedAt, vulnerability['title'], vulnerability['link']);
         }
 
-        vulnerability['ticketId'] = ticket['id']
+        vulnerability['ticketId'] = ticket['id'];
       });
 
       if (!isJpcertTicketCreated) {
@@ -77,45 +77,44 @@ class JpcertWatcher extends Watcher {
    * @return {Array(HashMap)} 注意喚起情報
    */
   static getJpcertNewHeadsUp(latestWatchedAt) {
-    var result = [];
-    var latestWatchedAtTime = latestWatchedAt.getTime();
+    const latestWatchedAtTime = latestWatchedAt.getTime();
 
     // rssを取得
-    var response = UrlFetchApp.fetch("https://www.jpcert.or.jp/rss/jpcert.rdf");
-    var xml = XmlService.parse(response.getContentText());
+    const response = UrlFetchApp.fetch('https://www.jpcert.or.jp/rss/jpcert.rdf');
+    const xml = XmlService.parse(response.getContentText());
 
     // rssのネームスペース
-    var namespace = XmlService.getNamespace('http://purl.org/rss/1.0/');
-    var namespaceDc = XmlService.getNamespace('http://purl.org/dc/elements/1.1/');
+    const namespace = XmlService.getNamespace('http://purl.org/rss/1.0/');
+    const namespaceDc = XmlService.getNamespace('http://purl.org/dc/elements/1.1/');
 
     // rssに含まれるitemから条件に該当するデータを取得
-    var items = xml.getRootElement().getChildren("item", namespace);
-    for (var i = 0; i < items.length; i++) {
-      var item = {
-        'title': items[i].getChild('title', namespace).getText(),
-        'link' : items[i].getChild('link', namespace).getText(),
-        'date' : new Date(items[i].getChild('date', namespaceDc).getText())
+    const items = xml.getRootElement().getChildren('item', namespace);
+    const results = items.map(item => {
+      const result = {
+        'title': item.getChild('title', namespace).getText(),
+        'link' : item.getChild('link', namespace).getText(),
+        'date' : new Date(item.getChild('date', namespaceDc).getText())
       };
 
       // 注意喚起以外の情報は除外
-      if (!item['link'].match(/https:\/\/www\.jpcert\.or\.jp\/at\//)) {
-        continue;
+      if (!result['link'].match(/https:\/\/www\.jpcert\.or\.jp\/at\//)) {
+        return;
       }
 
       // 確認済みの情報は除外
-      if (item['date'].getTime() <= latestWatchedAtTime) {
-        continue;
+      if (result['date'].getTime() <= latestWatchedAtTime) {
+        return;
       }
 
       // タイトルを調整
-      item['title'] = item['title'].replace(/^注意喚起:/, '');
-      item['title'] = item['title'].replace(/\((?:公開|更新)\)$/, '');
-      item['title'] = item['title'].trim();
+      result['title'] = result['title'].replace(/^注意喚起:/, '');
+      result['title'] = result['title'].replace(/\((?:公開|更新)\)$/, '');
+      result['title'] = result['title'].trim();
 
-      result.push(item);
-    }
+      return result;
+    }).filter(result => result);
 
-    return result;
+    return results;
   }
 
   /**
@@ -126,34 +125,33 @@ class JpcertWatcher extends Watcher {
    * @return {Array(HashMap)} 脆弱性情報
    */
   static getJpcertNewVulnerabilities(latestWatchedAt) {
-    var result = [];
-    var latestWatchedAtTime = latestWatchedAt.getTime();
+    const latestWatchedAtTime = latestWatchedAt.getTime();
 
     // rssを取得
-    var response = UrlFetchApp.fetch("http://jvn.jp/rss/jvn.rdf");
-    var xml = XmlService.parse(response.getContentText());
+    const response = UrlFetchApp.fetch('http://jvn.jp/rss/jvn.rdf');
+    const xml = XmlService.parse(response.getContentText());
 
     // rssのネームスペース
-    var namespace = XmlService.getNamespace("http://purl.org/rss/1.0/")
-    var namespaceDcTerms = XmlService.getNamespace("http://purl.org/dc/terms/");
+    const namespace = XmlService.getNamespace('http://purl.org/rss/1.0/');
+    const namespaceDcTerms = XmlService.getNamespace('http://purl.org/dc/terms/');
 
     // rssに含まれるitemから条件に該当するデータを取得
-    var items = xml.getRootElement().getChildren("item", namespace);
-    for (var i = 0; i < items.length; i++) {
-      var item = {
-        'title' : items[i].getChild('title', namespace).getText(),
-        'link'  : items[i].getChild('link', namespace).getText(),
-        'date'  : new Date(items[i].getChild('issued', namespaceDcTerms).getText())
+    const items = xml.getRootElement().getChildren('item', namespace);
+    const results = items.map(item => {
+      const result = {
+        'title' : item.getChild('title', namespace).getText(),
+        'link'  : item.getChild('link', namespace).getText(),
+        'date'  : new Date(item.getChild('issued', namespaceDcTerms).getText())
       };
 
       // 確認済みの情報は除外
-      if (item['date'].getTime() <= latestWatchedAtTime) {
-        continue;
+      if (result['date'].getTime() <= latestWatchedAtTime) {
+        return;
       }
 
-      result.push(item);
-    }
+      return result;
+    }).filter(result => result);
 
-    return result;
+    return results;
   }
 }

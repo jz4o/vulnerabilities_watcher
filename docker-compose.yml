@@ -17,3 +17,15 @@ services:
       LANG: en_US.UTF-8
     working_dir: /usr/src
     tty: true
+  eslint:
+    build:
+      context: ./
+      dockerfile: dockerfiles/eslint/Dockerfile
+    volumes:
+      - ./src:/usr/src/src
+      - ./eslint.config.js:/usr/src/eslint.config.js
+      - ./dockerfiles/eslint/package.json:/usr/src/package.json
+      - ./dockerfiles/eslint/package-lock.json:/usr/src/package-lock.json
+    working_dir: /usr/src
+    command: npx eslint .
+

@@ -69,7 +69,7 @@ function createTicketForEscalation(siteName, watchedAt, vulnerabilityTitle, vuln
  * @return {String} チケットの件名
  */
 function buildTicketSubject(sitename, watchedAt, vulnerabilityTitle) {
-  var subject = sitename + ' ' + Utilities.formatDate(watchedAt, 'JST', 'YYYY-MM-dd HH:mm');
+  let subject = sitename + ' ' + Utilities.formatDate(watchedAt, 'JST', 'YYYY-MM-dd HH:mm');
   if (vulnerabilityTitle) {
     subject += ' [' + vulnerabilityTitle + ']';
   }
@@ -89,32 +89,32 @@ function buildTicketSubject(sitename, watchedAt, vulnerabilityTitle) {
  * @return {HashMap} 作成したチケット
  */
 function createTicket(subject, description, statusId, categoryId, doneRatio) {
-  var requestBody = {
-    "issue": {
-      "project_id"     : redmine['projectId'],
-      "tracker_id"     : redmine['tracker']['task'],
-      "subject"        : subject,
-      "description"    : description,
-      "status_id"      : statusId,
-      "priority_id"    : redmine['priority']['normal'],
-      "assigned_to_id" : config['watcherRedmineId'],
-      "category_id"    : categoryId,
-      "done_ratio"     : doneRatio
+  const requestBody = {
+    'issue': {
+      'project_id'     : redmine['projectId'],
+      'tracker_id'     : redmine['tracker']['task'],
+      'subject'        : subject,
+      'description'    : description,
+      'status_id'      : statusId,
+      'priority_id'    : redmine['priority']['normal'],
+      'assigned_to_id' : config['watcherRedmineId'],
+      'category_id'    : categoryId,
+      'done_ratio'     : doneRatio
     }
-  }
+  };
 
-  var headers = {
+  const headers = {
     'X-Redmine-API-Key': redmine['apiKey']
   };
 
-  var options = {
+  const options = {
     'method'      : 'post',
     'contentType' : 'application/json',
-    "headers"     : headers,
+    'headers'     : headers,
     'payload'     : JSON.stringify(requestBody)
-  }
+  };
 
-  var response = UrlFetchApp.fetch(redmine['url'] + '/issues.json', options);
+  const response = UrlFetchApp.fetch(redmine['url'] + '/issues.json', options);
   return JSON.parse(response.getContentText())['issue'];
 }
 
@@ -126,17 +126,17 @@ function createTicket(subject, description, statusId, categoryId, doneRatio) {
  * @return {Integer|null} 該当の脆弱性情報・注意喚起情報のチケットのID
  */
 function getTicketId(vulnerabilityLink) {
-  var headers = {
+  const headers = {
     'X-Redmine-API-Key': redmine['apiKey']
   };
 
-  var options = {
+  const options = {
     'method'  : 'get',
     'headers' : headers
-  }
+  };
 
-  var response = UrlFetchApp.fetch(redmine['url'] + '/search.json?q=' + vulnerabilityLink, options);
-  var json = JSON.parse(response.getContentText());
+  const response = UrlFetchApp.fetch(redmine['url'] + '/search.json?q=' + vulnerabilityLink, options);
+  const json = JSON.parse(response.getContentText());
 
   if (json['total_count'] <= 0) {
     return null;
@@ -156,28 +156,28 @@ function getTicketId(vulnerabilityLink) {
  *  @return {Array} 不要となったチケットのID
  */
 function getResolvedTicketIds() {
-  var headers = {
+  const headers = {
     'X-Redmine-API-Key': redmine['apiKey']
   };
 
-  var options = {
+  const options = {
     'method'  : 'get',
     'headers' : headers
-  }
+  };
 
-  var borderDate = new Date();
+  const borderDate = new Date();
   borderDate.setDate(borderDate.getDate() - redmine['marginDaysForResolveToFinish']);
 
-  var searchConditions = [];
+  const searchConditions = [];
   searchConditions.push('project_id=' + redmine['projectId']);
   searchConditions.push('status_id=' + redmine['status']['resolve']);
   searchConditions.push('updated_on=%3C%3D' + Utilities.formatDate(borderDate, 'JST', 'yyyy-MM-dd')); // <=borderDate
   searchConditions.push('done_ratio=%3E%3D100');                                                      // >=100
 
-  var response = UrlFetchApp.fetch(redmine['url'] + '/issues.json?' + searchConditions.join('&'), options);
-  var json = JSON.parse(response.getContentText());
+  const response = UrlFetchApp.fetch(redmine['url'] + '/issues.json?' + searchConditions.join('&'), options);
+  const json = JSON.parse(response.getContentText());
 
-  var result = [];
+  const result = [];
   json['issues'].forEach(function(issue) {
     result.push(issue['id']);
   });
@@ -189,16 +189,16 @@ function getResolvedTicketIds() {
  * 不要となったチケットのステータスを終了に更新する.
  */
 function finishForResolvedTickets() {
-  var requestBody = {
+  const requestBody = {
     'issue': {
       'status_id': redmine['status']['finish'],
       'notes'    : '解決済チケットを終了（スクリプトによる自動終了）'
     }
-  }
-  var headers = {
+  };
+  const headers = {
     'X-Redmine-API-Key': redmine['apiKey']
   };
-  var options = {
+  const options = {
     'method'      : 'put',
     'contentType' : 'application/json',
     'headers'     : headers,

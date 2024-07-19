@@ -8,12 +8,12 @@
  * slackIncomingUrl [String]      SlackのIncomingWebHooksで設定したURL
  * redmine          [HashMap]     RedmineのAPIを使用するために必要な内容
  */
-var scriptProperties = PropertiesService.getScriptProperties();
-var spreadSheet      = SpreadsheetApp.getActiveSpreadsheet();
-var configSheet;
-var config;
-var slackIncomingUrl = scriptProperties.getProperty('SLACK_INCOMING_URL');
-var redmine = {
+const scriptProperties = PropertiesService.getScriptProperties();
+const spreadSheet      = SpreadsheetApp.getActiveSpreadsheet();
+let configSheet;
+let config;
+const slackIncomingUrl = scriptProperties.getProperty('SLACK_INCOMING_URL');
+const redmine = {
   'url'       : scriptProperties.getProperty('REDMINE_URL'),
   'apiKey'    : scriptProperties.getProperty('REDMINE_API_KEY'),
   'projectId' : scriptProperties.getProperty('REDMINE_PROJECT_ID'),
@@ -52,19 +52,17 @@ function setup() {
  */
 function setupSheets() {
   // シート名
-  var sheetNames = ['config'];
+  const sheetNames = ['config'];
 
-  for (var i = 0; i < sheetNames.length; i++) {
-    var sheetName = sheetNames[i];
-
+  sheetNames.forEach(sheetName => {
     // シート追加
     if (spreadSheet.getSheetByName(sheetName) == null) {
       spreadSheet.insertSheet(sheetName);
     }
 
     // グローバル変数にセット
-    eval(sheetName + 'Sheet = spreadSheet.getSheetByName("' + sheetName + '")')
-  }
+    eval(sheetName + 'Sheet = spreadSheet.getSheetByName("' + sheetName + '")');
+  });
 }
 
 /**
@@ -77,7 +75,7 @@ function setupConfig() {
   config = getConfig();
 
   // 設定内容のデフォルト値
-  var configDefaultValues = {};
+  const configDefaultValues = {};
   getWatcherClasses().forEach(watcher => {
     configDefaultValues[`${watcher.name}LatestWatchedAt`] = new Date(0);
   });
@@ -99,18 +97,18 @@ function setupConfig() {
  * @return [HashMap] configシートの内容
  */
 function getConfig() {
-  var result = {};
+  const configData  = configSheet.getDataRange().getValues();
+  const titleRow    = configData[0];
+  const keyColumn   = titleRow.indexOf('key');
+  const valueColumn = titleRow.indexOf('value');
 
-  var configData  = configSheet.getDataRange().getValues();
-  var titleRow    = configData[0];
-  var keyColumn   = titleRow.indexOf('key');
-  var valueColumn = titleRow.indexOf('value');
+  const result = {};
+  configData.forEach(data => {
+    const key = data[keyColumn];
+    const value = data[valueColumn];
 
-  for (var i = 1; i < configData.length; i++) {
-    var key = configData[i][keyColumn];
-    var value = configData[i][valueColumn];
     result[key] = value;
-  }
+  });
 
   return result;
 }
@@ -120,8 +118,8 @@ function getConfig() {
  */
 function updateConfigSheet() {
   configSheet.clear();
-  var data = [];
-  data.push(['key', 'value'])
+  const data = [];
+  data.push(['key', 'value']);
   for (key in config) {
     data.push([key, config[key]]);
   }
@@ -141,7 +139,7 @@ function watch() {
   setup();
 
   // 今回確認日時
-  var watchedAt = new Date();
+  const watchedAt = new Date();
 
   // 土日祝日の場合はチェックしない
   if (isHoliday(watchedAt)) {

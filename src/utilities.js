@@ -7,15 +7,15 @@
  */
 function isHoliday(date) {
   // 土日か判定
-  var weekInt = date.getDay();
+  const weekInt = date.getDay();
   if (weekInt <= 0 || 6 <= weekInt) {
     return true;
   }
 
   // 祝日か判定
-  var calendarId = 'ja.japanese#holiday@group.v.calendar.google.com';
-  var calendar = CalendarApp.getCalendarById(calendarId);
-  var todayEvents = calendar.getEventsForDay(date);
+  const calendarId = 'ja.japanese#holiday@group.v.calendar.google.com';
+  const calendar = CalendarApp.getCalendarById(calendarId);
+  const todayEvents = calendar.getEventsForDay(date);
   if (todayEvents.length > 0) {
     return true;
   }
@@ -32,7 +32,7 @@ function isHoliday(date) {
  * @return {HTTPResponse} 通知結果
  */
 function postMessage(message) {
-  var options = {
+  const options = {
     'method'     : 'post',
     'contentType': 'application/json',
     'payload'    : JSON.stringify({ 'text': message })
