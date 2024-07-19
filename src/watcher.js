@@ -12,21 +12,32 @@ class Watcher {
    * @return {String} 脆弱性情報・注意喚起情報(Slack通知用)
    */
   static slackMessagefy(title, items) {
-    var tz = Session.getScriptTimeZone();
+    const tz = Session.getScriptTimeZone();
 
-    var result = title + '\n\n';
-    result += '>>>\n';
-    for (var i = 0; i < items.length; i++) {
-      var item = items[i];
-      result += item['isUpdate'] ? '更新： ' : '新規： ';
-      result += '<' + item['link'] + '|' + item['title'] + '>' + "\n";
-      result += Utilities.formatDate(item['date'], tz, 'yyyy/MM/dd HH:mm:ss') + "\n";
+    const itemsResult = items.map(item => {
+      const itemRows = [];
+
+      const status = item['isUpdate'] ? '更新： ' : '新規： ';
+      const titleLink = '<' + item['link'] + '|' + item['title'] + '>';
+      itemRows.push(status + titleLink);
+
+      const date = Utilities.formatDate(item['date'], tz, 'yyyy/MM/dd HH:mm:ss');
+      itemRows.push(date);
+
       if (item['ticketId']) {
-        var ticketUrl = redmine['url'] + '/issues/' + item['ticketId'];
-        result += '<' + ticketUrl + '|' + 'Redmine' + '>' + "\n";
+        const ticketUrl = redmine['url'] + '/issues/' + item['ticketId'];
+        const ticketLink = '<' + ticketUrl + '|' + 'Redmine' + '>';
+        itemRows.push(ticketLink);
       }
-      result += "\n";
-    }
+
+      return itemRows.join('\n');
+    }).join('\n\n');
+
+    const result = [
+      title,
+      '>>>',
+      itemsResult
+    ].join('\n');
 
     return result;
   }

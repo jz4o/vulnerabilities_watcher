@@ -4,11 +4,6 @@ import googleAppsScript from 'eslint-plugin-googleappsscript';
 export default [
   js.configs.recommended,
   {
-    'ignores': [
-      'src/watcher.js',
-    ]
-  },
-  {
     'languageOptions': {
       'ecmaVersion': 2019,
       'globals': {
