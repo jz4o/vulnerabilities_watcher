@@ -57,7 +57,8 @@ class Jc3Watcher extends Watcher {
       const title = newsDescription.getChild('h3').getValue();
       const dateStr = newsDescription.getChild('ul').getChild('li').getText().split('.').join('/');
       const date = new Date(dateStr + ' 23:59:59');
-      const link = newsDescription.getChild('h3').getChild('a').getAttribute('href').getValue();
+      const href = newsDescription.getChild('h3').getChild('a').getAttribute('href').getValue();
+      const link = /^https?:\/\//.test(href) ? href : `${jc3Url}${href.replace(/^\//, '')}`;
 
       // 確認済みの情報は除外
       if (date.getTime() <= latestWatchedAtTime) {
