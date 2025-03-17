@@ -26,5 +26,5 @@ services:
       - ./dockerfiles/eslint/package.json:/usr/src/package.json
       - ./dockerfiles/eslint/package-lock.json:/usr/src/package-lock.json
     working_dir: /usr/src
-    command: npx eslint .
+    command: npm update && npx eslint .
 
