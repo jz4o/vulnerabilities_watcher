@@ -1,7 +1,7 @@
 {
   "type": "module",
   "dependencies": {
-    "eslint": "9.22.0",
+    "eslint": "9.24.0",
     "eslint-plugin-googleappsscript": "1.0.5"
   }
 }
