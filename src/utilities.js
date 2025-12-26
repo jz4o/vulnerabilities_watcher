@@ -16,7 +16,8 @@ function isHoliday(date) {
   const calendarId = 'ja.japanese#holiday@group.v.calendar.google.com';
   const calendar = CalendarApp.getCalendarById(calendarId);
   const todayEvents = calendar.getEventsForDay(date);
-  if (todayEvents.length > 0) {
+  const todayPublicHolidayEvents = todayEvents.filter(event => event.getDescription() === '祝日');
+  if (todayPublicHolidayEvents.length > 0) {
     return true;
   }
 

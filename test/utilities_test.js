@@ -2,6 +2,12 @@ function utilitiesTest() {
   var currentYear = new Date().getFullYear();
   var dateInt = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
 
+  var isSaturdayOrSunday = function(date) {
+    var weekInt = date.getDay();
+    var weekName = dateInt[weekInt];
+    return ['saturday', 'sunday'].includes(weekName);
+  };
+
   exports({
     'utilities': {
       'isHoliday': {
@@ -93,6 +99,46 @@ function utilitiesTest() {
           'labor thanksgiving day': function() {
             assertThat(isHoliday(new Date(currentYear + '/11/23'))).isTrue();
           }
+        },
+        'traditional religious holiday': {
+          'bank holidays': function() {
+            var dates = [new Date(currentYear + '/01/02'), new Date(currentYear + '/01/03')];
+            dates.forEach(date => {
+              assertThat(isHoliday(date)).is(isSaturdayOrSunday(date));
+            });
+          },
+          'setsubun': function() {
+            var day = day = parseInt(4.8693 + 0.242713 * (currentYear - 1901) - parseInt((currentYear - 1901) / 4)) - 1;
+            var date = new Date(currentYear + '/02/0' + day);
+            assertThat(isHoliday(date)).is(isSaturdayOrSunday(date));
+          },
+          'hinamatsuri': function() {
+            var date = new Date(currentYear + '/03/03');
+            assertThat(isHoliday(date)).is(isSaturdayOrSunday(date));
+          },
+          "mother's day": function() {
+            // 2nd sunday of may
+            var dayDiff = dateInt.indexOf('sunday') - new Date(currentYear + '/05/01').getDay();
+            var targetDay = 1 + dayDiff + (dayDiff < 0 ? 14 : 7);
+            var date = new Date(currentYear + '/05/' + targetDay);
+            assertThat(isHoliday(date)).is(isSaturdayOrSunday(date));
+          },
+          'tanabata': function() {
+            var date = new Date(currentYear + '/07/07');
+            assertThat(isHoliday(date)).is(isSaturdayOrSunday(date));
+          },
+          'shichi-go-san': function() {
+            var date = new Date(currentYear + '/11/15');
+            assertThat(isHoliday(date)).is(isSaturdayOrSunday(date));
+          },
+          'christmas': function() {
+            var date = new Date(currentYear + '/12/25');
+            assertThat(isHoliday(date)).is(isSaturdayOrSunday(date));
+          },
+          "new year's eve": function() {
+            var date = new Date(currentYear + '/12/31');
+            assertThat(isHoliday(date)).is(isSaturdayOrSunday(date));
+          },
         }
       },
       'postMessage': function() {
