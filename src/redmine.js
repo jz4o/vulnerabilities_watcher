@@ -89,6 +89,10 @@ function buildTicketSubject(sitename, watchedAt, vulnerabilityTitle) {
  * @return {HashMap} 作成したチケット
  */
 function createTicket(subject, description, statusId, categoryId, doneRatio) {
+  if (!config) {
+    setup();
+  }
+
   const requestBody = {
     'issue': {
       'project_id'     : redmine['projectId'],
