@@ -27,6 +27,17 @@ export default [
       'quote-props': ['error', 'always'],
       'semi': ['error', 'always']
     }
+  },
+  // below temporary ignore rules.
+  {
+    'files': ['test/**'],
+    'rules': {
+      'max-len': 'off',
+      'no-global-assign': 'off',
+      'no-var': 'off',
+      'quotes': 'off',
+      'semi': 'off'
+    }
   }
 ];
 
