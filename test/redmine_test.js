@@ -1,6 +1,6 @@
 function redmineTest() {
-  var createTicketOrigin = createTicket;
-  var createTicketMock   = function(subject, description, statusId, categoryId, doneRatio) {
+  const createTicketOrigin = createTicket;
+  const createTicketMock   = function(subject, description, statusId, categoryId, doneRatio) {
     return {
       'subject':     subject,
       'description': description,
@@ -8,7 +8,7 @@ function redmineTest() {
       'categoryId':  categoryId,
       'doneRatio':   doneRatio
     };
-  }
+  };
 
   // override to mock
   UrlFetchApp = {};
@@ -25,11 +25,11 @@ function redmineTest() {
         // override function to mock
         createTicket = createTicketMock;
 
-        var siteName  = 'testSite';
-        var watchedAt = new Date();
+        const siteName  = 'testSite';
+        const watchedAt = new Date();
 
-        var result = JSON.stringify(createTicketForWhenNotFoundNewVulnerability(siteName, watchedAt));
-        var expect = JSON.stringify({
+        const result = JSON.stringify(createTicketForWhenNotFoundNewVulnerability(siteName, watchedAt));
+        const expect = JSON.stringify({
           'subject':     buildTicketSubject(siteName, watchedAt, null),
           'description': '',
           'statusId':    redmine['status']['resolve'],
@@ -46,13 +46,15 @@ function redmineTest() {
         // override function to mock
         createTicket = createTicketMock;
 
-        var siteName           = 'testSite';
-        var watchedAt          = new Date();
-        var vulnerabilityTitle = 'testTitle';
-        var vulnerabilityLink  = 'testLink'
+        const siteName           = 'testSite';
+        const watchedAt          = new Date();
+        const vulnerabilityTitle = 'testTitle';
+        const vulnerabilityLink  = 'testLink';
 
-        var result = JSON.stringify(createTicketForWatchOver(siteName, watchedAt, vulnerabilityTitle, vulnerabilityLink));
-        var expect = JSON.stringify({
+        const result = JSON.stringify(
+          createTicketForWatchOver(siteName, watchedAt, vulnerabilityTitle, vulnerabilityLink)
+        );
+        const expect = JSON.stringify({
           'subject':     buildTicketSubject(siteName, watchedAt, vulnerabilityTitle),
           'description': vulnerabilityLink,
           'statusId':    redmine['status']['resolve'],
@@ -69,13 +71,15 @@ function redmineTest() {
         // override function to mock
         createTicket = createTicketMock;
 
-        var siteName           = 'testSite';
-        var watchedAt          = new Date();
-        var vulnerabilityTitle = 'testTitle';
-        var vulnerabilityLink  = 'testLink'
+        const siteName           = 'testSite';
+        const watchedAt          = new Date();
+        const vulnerabilityTitle = 'testTitle';
+        const vulnerabilityLink  = 'testLink';
 
-        var result = JSON.stringify(createTicketForEscalation(siteName, watchedAt, vulnerabilityTitle, vulnerabilityLink));
-        var expect = JSON.stringify({
+        const result = JSON.stringify(
+          createTicketForEscalation(siteName, watchedAt, vulnerabilityTitle, vulnerabilityLink)
+        );
+        const expect = JSON.stringify({
           'subject':     buildTicketSubject(siteName, watchedAt, vulnerabilityTitle),
           'description': vulnerabilityLink,
           'statusId':    redmine['status']['new'],
@@ -90,59 +94,59 @@ function redmineTest() {
       },
       'buildTicketSubject': {
         'when vulnerability title is specified': function() {
-          var sitename           = 'testSite';
-          var watchedAt          = new Date(0);
-          var vulnerabilityTitle = 'testTitle';
+          const sitename           = 'testSite';
+          const watchedAt          = new Date(0);
+          const vulnerabilityTitle = 'testTitle';
 
-          var result = buildTicketSubject(sitename, watchedAt, vulnerabilityTitle)
-          var expect = 'testSite 1970-01-01 09:00 [testTitle]';
+          const result = buildTicketSubject(sitename, watchedAt, vulnerabilityTitle);
+          const expect = 'testSite 1970-01-01 09:00 [testTitle]';
 
           assertThat(result).is(expect);
         },
         'when vulnerability title is not specified': function() {
-          var sitename           = 'testSite';
-          var watchedAt          = new Date(0);
-          var vulnerabilityTitle = null;
+          const sitename           = 'testSite';
+          const watchedAt          = new Date(0);
+          const vulnerabilityTitle = null;
 
-          var result = buildTicketSubject(sitename, watchedAt, vulnerabilityTitle)
-          var expect = 'testSite 1970-01-01 09:00';
+          const result = buildTicketSubject(sitename, watchedAt, vulnerabilityTitle);
+          const expect = 'testSite 1970-01-01 09:00';
 
           assertThat(result).is(expect);
         }
       },
       'createTicket': function() {
         // override Object#getContentText to mock
-        var getContentTextOrigin = Object.prototype.getContentText;
+        const getContentTextOrigin = Object.prototype.getContentText;
         Object.prototype.getContentText = function() {
           return JSON.stringify({ 'issue': this });
         };
 
-        var subject     = 'testTitle';
-        var description = 'testDescription';
-        var statusId    = 999;
-        var categoryId  = 888;
-        var doneRatio   = 100;
+        const subject     = 'testTitle';
+        const description = 'testDescription';
+        const statusId    = 999;
+        const categoryId  = 888;
+        const doneRatio   = 100;
 
-        var result = JSON.stringify(createTicket(subject, description, statusId, categoryId, doneRatio));
-        var expect = JSON.stringify({
+        const result = JSON.stringify(createTicket(subject, description, statusId, categoryId, doneRatio));
+        const expect = JSON.stringify({
           'url':    (redmine['url'] + '/issues.json'),
           'params': {
             'method'      : 'post',
             'contentType' : 'application/json',
-            "headers"     : {
+            'headers'     : {
               'X-Redmine-API-Key': redmine['apiKey']
             },
             'payload'     : JSON.stringify({
-              "issue": {
-                "project_id"     : redmine['projectId'],
-                "tracker_id"     : redmine['tracker']['task'],
-                "subject"        : subject,
-                "description"    : description,
-                "status_id"      : statusId,
-                "priority_id"    : redmine['priority']['normal'],
-                "assigned_to_id" : config['watcherRedmineId'],
-                "category_id"    : categoryId,
-                "done_ratio"     : doneRatio
+              'issue': {
+                'project_id'     : redmine['projectId'],
+                'tracker_id'     : redmine['tracker']['task'],
+                'subject'        : subject,
+                'description'    : description,
+                'status_id'      : statusId,
+                'priority_id'    : redmine['priority']['normal'],
+                'assigned_to_id' : config['watcherRedmineId'],
+                'category_id'    : categoryId,
+                'done_ratio'     : doneRatio
               }
             })
           }
@@ -156,7 +160,7 @@ function redmineTest() {
       'getTicketId': {
         'when ticket exist': function() {
           // override function to mock
-          var getContentTextOrigin = Object.prototype.getContentText;
+          const getContentTextOrigin = Object.prototype.getContentText;
           Object.prototype.getContentText = function() {
             return JSON.stringify({
               'total_count': 1,
@@ -164,12 +168,12 @@ function redmineTest() {
                 { 'id': 999 }
               ]
             });
-          }
+          };
 
-          var vulnerabilityLink = 'testLink';
+          const vulnerabilityLink = 'testLink';
 
-          var result = getTicketId(vulnerabilityLink);
-          var expect = 999;
+          const result = getTicketId(vulnerabilityLink);
+          const expect = 999;
 
           assertThat(result).is(expect);
 
@@ -178,18 +182,18 @@ function redmineTest() {
         },
         'when ticket not exist': function() {
           // override function to mock
-          var getContentTextOrigin = Object.prototype.getContentText;
+          const getContentTextOrigin = Object.prototype.getContentText;
           Object.prototype.getContentText = function() {
             return JSON.stringify({
               'total_count': 0,
               'results':     []
             });
-          }
+          };
 
-          var vulnerabilityLink = 'testLink';
+          const vulnerabilityLink = 'testLink';
 
-          var result = getTicketId(vulnerabilityLink);
-          var expect = null;
+          const result = getTicketId(vulnerabilityLink);
+          const expect = null;
 
           assertThat(result).is(expect);
 

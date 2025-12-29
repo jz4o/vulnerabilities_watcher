@@ -22,6 +22,7 @@ services:
       dockerfile: dockerfiles/eslint/Dockerfile
     volumes:
       - ./src:/usr/src/src
+      - ./test:/usr/src/test
       - ./eslint.config.js:/usr/src/eslint.config.js
       - ./dockerfiles/eslint/package.json:/usr/src/package.json
       - ./dockerfiles/eslint/package-lock.json:/usr/src/package-lock.json

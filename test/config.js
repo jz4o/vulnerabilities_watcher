@@ -1,2 +1,2 @@
-var exports    = GASUnit.exports;
-var assertThat = AssertGAS.assertThat;
+const exports    = GASUnit.exports;
+const assertThat = AssertGAS.assertThat;

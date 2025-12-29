@@ -23,9 +23,15 @@ export default [
       'object-curly-spacing': ['error', 'always'],
       'one-var': ['error', 'never'],
       'padded-blocks': ['error', 'never'],
-      'quotes': ['error', 'single'],
+      'quotes': ['error', 'single', { 'avoidEscape': true }],
       'quote-props': ['error', 'always'],
       'semi': ['error', 'always']
+    }
+  },
+  {
+    'files': ['test/**'],
+    'rules': {
+      'no-global-assign': 'off',
     }
   }
 ];
