@@ -1,19 +1,19 @@
 function allTest() {
-  var testFunctions = shuffle([
+  const testFunctions = shuffle([
     redmineTest,
     utilitiesTest
   ]);
 
   testFunctions.forEach(function(testFunction) {
     testFunction();
-  })
+  });
 }
 
 function shuffle(array){
-  var result = [];
+  const result = [];
   for(i = array.length; i > 0; i--){
-    var index = Math.floor(Math.random() * i);
-    var val = array.splice(index, 1)[0];
+    const index = Math.floor(Math.random() * i);
+    const val = array.splice(index, 1)[0];
     result.push(val);
   }
 

@@ -1,10 +1,10 @@
 function utilitiesTest() {
-  var currentYear = new Date().getFullYear();
-  var dateInt = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+  const currentYear = new Date().getFullYear();
+  const dateInt = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
-  var isSaturdayOrSunday = function(date) {
-    var weekInt = date.getDay();
-    var weekName = dateInt[weekInt];
+  const isSaturdayOrSunday = function(date) {
+    const weekInt = date.getDay();
+    const weekName = dateInt[weekInt];
     return ['saturday', 'sunday'].includes(weekName);
   };
 
@@ -12,13 +12,13 @@ function utilitiesTest() {
     'utilities': {
       'isHoliday': {
         'saturday': function() {
-          var dayDiff = dateInt.indexOf('saturday') - new Date(currentYear + '/06/01').getDay();
-          var targetDay = 1 + dayDiff + (dayDiff < 0 ? 14 : 7);
+          const dayDiff = dateInt.indexOf('saturday') - new Date(currentYear + '/06/01').getDay();
+          const targetDay = 1 + dayDiff + (dayDiff < 0 ? 14 : 7);
           assertThat(isHoliday(new Date(currentYear + '/06/' + targetDay))).isTrue();
         },
         'sunday': function() {
-          var dayDiff = dateInt.indexOf('sunday') - new Date(currentYear + '/06/01').getDay();
-          var targetDay = 1 + dayDiff + (dayDiff < 0 ? 14 : 7);
+          const dayDiff = dateInt.indexOf('sunday') - new Date(currentYear + '/06/01').getDay();
+          const targetDay = 1 + dayDiff + (dayDiff < 0 ? 14 : 7);
           assertThat(isHoliday(new Date(currentYear + '/06/' + targetDay))).isTrue();
         },
         'public holiday': {
@@ -27,8 +27,8 @@ function utilitiesTest() {
           },
           'adult day': function() {
             // 2nd monday of january
-            var dayDiff = dateInt.indexOf('monday') - new Date(currentYear + '/01/01').getDay();
-            var targetDay = 1 + dayDiff + (dayDiff < 0 ? 14 : 7);
+            const dayDiff = dateInt.indexOf('monday') - new Date(currentYear + '/01/01').getDay();
+            const targetDay = 1 + dayDiff + (dayDiff < 0 ? 14 : 7);
             assertThat(isHoliday(new Date(currentYear + '/01/' + targetDay))).isTrue();
           },
           'foundation day': function() {
@@ -38,7 +38,10 @@ function utilitiesTest() {
             assertThat(isHoliday(new Date(currentYear + '/02/23'))).isTrue();
           },
           'vernal equinox day': function() {
-            var targetDay = Math.floor(20.8431 + 0.242194 * (currentYear - 1980)) - Math.floor((currentYear - 1980) / 4);
+            const targetDay = (
+              Math.floor(20.8431 + 0.242194 * (currentYear - 1980))
+              - Math.floor((currentYear - 1980) / 4)
+            );
             assertThat(isHoliday(new Date(currentYear + '/03/' + targetDay))).isTrue();
           },
           'showa day': function() {
@@ -59,8 +62,8 @@ function utilitiesTest() {
               assertThat(isHoliday(new Date('2020/07/23'))).isTrue();
             } else {
               // 3rd monday of july
-              var dayDiff = dateInt.indexOf('monday') - new Date(currentYear + '/07/01').getDay();
-              var targetDay = 1 + dayDiff + (dayDiff < 0 ? 21 : 14);
+              const dayDiff = dateInt.indexOf('monday') - new Date(currentYear + '/07/01').getDay();
+              const targetDay = 1 + dayDiff + (dayDiff < 0 ? 21 : 14);
               assertThat(isHoliday(new Date(currentYear + '/07/' + targetDay))).isTrue();
             }
           },
@@ -74,12 +77,15 @@ function utilitiesTest() {
           },
           'respect for the aged day': function() {
             // 3rd monday of september
-            var dayDiff = dateInt.indexOf('monday') - new Date(currentYear + '/09/01').getDay();
-            var targetDay = 1 + dayDiff + (dayDiff < 0 ? 21 : 14);
+            const dayDiff = dateInt.indexOf('monday') - new Date(currentYear + '/09/01').getDay();
+            const targetDay = 1 + dayDiff + (dayDiff < 0 ? 21 : 14);
             assertThat(isHoliday(new Date(currentYear + '/09/' + targetDay))).isTrue();
           },
           'equinox day': function() {
-            var targetDay = Math.floor(23.2488 + 0.242194 * (currentYear - 1980)) - Math.floor((currentYear - 1980) / 4);
+            const targetDay = (
+              Math.floor(23.2488 + 0.242194 * (currentYear - 1980))
+              - Math.floor((currentYear - 1980) / 4)
+            );
             assertThat(isHoliday(new Date(currentYear + '/09/' + targetDay))).isTrue();
           },
           'physical education day': function() {
@@ -88,8 +94,8 @@ function utilitiesTest() {
               assertThat(isHoliday(new Date('2020/07/24'))).isTrue();
             } else {
               // 2nd monday of october
-              var dayDiff = dateInt.indexOf('monday') - new Date(currentYear + '/10/01').getDay();
-              var targetDay = 1 + dayDiff + (dayDiff < 0 ? 14 : 7);
+              const dayDiff = dateInt.indexOf('monday') - new Date(currentYear + '/10/01').getDay();
+              const targetDay = 1 + dayDiff + (dayDiff < 0 ? 14 : 7);
               assertThat(isHoliday(new Date(currentYear + '/10/' + targetDay))).isTrue();
             }
           },
@@ -102,41 +108,41 @@ function utilitiesTest() {
         },
         'traditional religious holiday': {
           'bank holidays': function() {
-            var dates = [new Date(currentYear + '/01/02'), new Date(currentYear + '/01/03')];
+            const dates = [new Date(currentYear + '/01/02'), new Date(currentYear + '/01/03')];
             dates.forEach(date => {
               assertThat(isHoliday(date)).is(isSaturdayOrSunday(date));
             });
           },
           'setsubun': function() {
-            var day = day = parseInt(4.8693 + 0.242713 * (currentYear - 1901) - parseInt((currentYear - 1901) / 4)) - 1;
-            var date = new Date(currentYear + '/02/0' + day);
+            const day = parseInt(4.8693 + 0.242713 * (currentYear - 1901) - parseInt((currentYear - 1901) / 4)) - 1;
+            const date = new Date(currentYear + '/02/0' + day);
             assertThat(isHoliday(date)).is(isSaturdayOrSunday(date));
           },
           'hinamatsuri': function() {
-            var date = new Date(currentYear + '/03/03');
+            const date = new Date(currentYear + '/03/03');
             assertThat(isHoliday(date)).is(isSaturdayOrSunday(date));
           },
           "mother's day": function() {
             // 2nd sunday of may
-            var dayDiff = dateInt.indexOf('sunday') - new Date(currentYear + '/05/01').getDay();
-            var targetDay = 1 + dayDiff + (dayDiff < 0 ? 14 : 7);
-            var date = new Date(currentYear + '/05/' + targetDay);
+            const dayDiff = dateInt.indexOf('sunday') - new Date(currentYear + '/05/01').getDay();
+            const targetDay = 1 + dayDiff + (dayDiff < 0 ? 14 : 7);
+            const date = new Date(currentYear + '/05/' + targetDay);
             assertThat(isHoliday(date)).is(isSaturdayOrSunday(date));
           },
           'tanabata': function() {
-            var date = new Date(currentYear + '/07/07');
+            const date = new Date(currentYear + '/07/07');
             assertThat(isHoliday(date)).is(isSaturdayOrSunday(date));
           },
           'shichi-go-san': function() {
-            var date = new Date(currentYear + '/11/15');
+            const date = new Date(currentYear + '/11/15');
             assertThat(isHoliday(date)).is(isSaturdayOrSunday(date));
           },
           'christmas': function() {
-            var date = new Date(currentYear + '/12/25');
+            const date = new Date(currentYear + '/12/25');
             assertThat(isHoliday(date)).is(isSaturdayOrSunday(date));
           },
           "new year's eve": function() {
-            var date = new Date(currentYear + '/12/31');
+            const date = new Date(currentYear + '/12/31');
             assertThat(isHoliday(date)).is(isSaturdayOrSunday(date));
           },
         }
@@ -151,10 +157,10 @@ function utilitiesTest() {
           };
         };
 
-        var testMessage = 'message';
+        const testMessage = 'message';
 
-        var result = JSON.stringify(postMessage(testMessage));
-        var expect = JSON.stringify({
+        const result = JSON.stringify(postMessage(testMessage));
+        const expect = JSON.stringify({
           'url': slackIncomingUrl,
           'params': {
             'method'     : 'post',
