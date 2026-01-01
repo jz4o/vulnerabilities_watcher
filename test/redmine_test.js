@@ -1,6 +1,6 @@
-function redmineTest() {
+const redmineTest = () => {
   const createTicketOrigin = createTicket;
-  const createTicketMock   = function(subject, description, statusId, categoryId, doneRatio) {
+  const createTicketMock   = (subject, description, statusId, categoryId, doneRatio) => {
     return {
       'subject':     subject,
       'description': description,
@@ -12,7 +12,7 @@ function redmineTest() {
 
   // override to mock
   UrlFetchApp = {};
-  UrlFetchApp.fetch = function(url, params) {
+  UrlFetchApp.fetch = (url, params) => {
     return {
       'url': url,
       'params': params
@@ -21,7 +21,7 @@ function redmineTest() {
 
   exports({
     'redmine': {
-      'createTicketForWhenNotFoundNewVulnerability': function() {
+      'createTicketForWhenNotFoundNewVulnerability': () => {
         // override function to mock
         createTicket = createTicketMock;
 
@@ -42,7 +42,7 @@ function redmineTest() {
         // revert overridden function
         createTicket = createTicketOrigin;
       },
-      'createTicketForWatchOver': function() {
+      'createTicketForWatchOver': () => {
         // override function to mock
         createTicket = createTicketMock;
 
@@ -67,7 +67,7 @@ function redmineTest() {
         // revert overridden function
         createTicket = createTicketOrigin;
       },
-      'createTicketForEscalation': function() {
+      'createTicketForEscalation': () => {
         // override function to mock
         createTicket = createTicketMock;
 
@@ -93,7 +93,7 @@ function redmineTest() {
         createTicket = createTicketOrigin;
       },
       'buildTicketSubject': {
-        'when vulnerability title is specified': function() {
+        'when vulnerability title is specified': () => {
           const sitename           = 'testSite';
           const watchedAt          = new Date(0);
           const vulnerabilityTitle = 'testTitle';
@@ -103,7 +103,7 @@ function redmineTest() {
 
           assertThat(result).is(expect);
         },
-        'when vulnerability title is not specified': function() {
+        'when vulnerability title is not specified': () => {
           const sitename           = 'testSite';
           const watchedAt          = new Date(0);
           const vulnerabilityTitle = null;
@@ -114,7 +114,7 @@ function redmineTest() {
           assertThat(result).is(expect);
         }
       },
-      'createTicket': function() {
+      'createTicket': () => {
         // override Object#getContentText to mock
         const getContentTextOrigin = Object.prototype.getContentText;
         Object.prototype.getContentText = function() {
@@ -158,10 +158,10 @@ function redmineTest() {
         Object.prototype.getContentText = getContentTextOrigin;
       },
       'getTicketId': {
-        'when ticket exist': function() {
+        'when ticket exist': () => {
           // override function to mock
           const getContentTextOrigin = Object.prototype.getContentText;
-          Object.prototype.getContentText = function() {
+          Object.prototype.getContentText = () => {
             return JSON.stringify({
               'total_count': 1,
               'results': [
@@ -180,10 +180,10 @@ function redmineTest() {
           // revert overridden function
           Object.prototype.getContentText = getContentTextOrigin;
         },
-        'when ticket not exist': function() {
+        'when ticket not exist': () => {
           // override function to mock
           const getContentTextOrigin = Object.prototype.getContentText;
-          Object.prototype.getContentText = function() {
+          Object.prototype.getContentText = () => {
             return JSON.stringify({
               'total_count': 0,
               'results':     []
@@ -203,4 +203,4 @@ function redmineTest() {
       }
     }
   });
-}
+};
