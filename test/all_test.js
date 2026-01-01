@@ -1,15 +1,15 @@
-function allTest() {
+const allTest = () => {
   const testFunctions = shuffle([
     redmineTest,
     utilitiesTest
   ]);
 
-  testFunctions.forEach(function(testFunction) {
+  testFunctions.forEach(testFunction => {
     testFunction();
   });
-}
+};
 
-function shuffle(array){
+const shuffle = array => {
   const result = [];
   for(i = array.length; i > 0; i--){
     const index = Math.floor(Math.random() * i);
@@ -18,4 +18,4 @@ function shuffle(array){
   }
 
   return result;
-}
+};

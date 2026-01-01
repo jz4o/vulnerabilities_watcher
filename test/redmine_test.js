@@ -1,6 +1,6 @@
-function redmineTest() {
+const redmineTest = () => {
   const createTicketOrigin = createTicket;
-  const createTicketMock   = function(subject, description, statusId, categoryId, doneRatio) {
+  const createTicketMock   = (subject, description, statusId, categoryId, doneRatio) => {
     return {
       'subject':     subject,
       'description': description,
@@ -12,7 +12,7 @@ function redmineTest() {
 
   // override to mock
   UrlFetchApp = {};
-  UrlFetchApp.fetch = function(url, params) {
+  UrlFetchApp.fetch = (url, params) => {
     return {
       'url': url,
       'params': params
@@ -21,7 +21,7 @@ function redmineTest() {
 
   exports({
     'redmine': {
-      'createTicketForWhenNotFoundNewVulnerability': function() {
+      'createTicketForWhenNotFoundNewVulnerability': () => {
         // override function to mock
         createTicket = createTicketMock;
 
@@ -42,7 +42,7 @@ function redmineTest() {
         // revert overridden function
         createTicket = createTicketOrigin;
       },
-      'createTicketForWatchOver': function() {
+      'createTicketForWatchOver': () => {
         // override function to mock
         createTicket = createTicketMock;
 
@@ -67,7 +67,7 @@ function redmineTest() {
         // revert overridden function
         createTicket = createTicketOrigin;
       },
-      'createTicketForEscalation': function() {
+      'createTicketForEscalation': () => {
         // override function to mock
         createTicket = createTicketMock;
 
@@ -93,7 +93,7 @@ function redmineTest() {
         createTicket = createTicketOrigin;
       },
       'buildTicketSubject': {
-        'when vulnerability title is specified': function() {
+        'when vulnerability title is specified': () => {
           const sitename           = 'testSite';
           const watchedAt          = new Date(0);
           const vulnerabilityTitle = 'testTitle';
@@ -103,7 +103,7 @@ function redmineTest() {
 
           assertThat(result).is(expect);
         },
-        'when vulnerability title is not specified': function() {
+        'when vulnerability title is not specified': () => {
           const sitename           = 'testSite';
           const watchedAt          = new Date(0);
           const vulnerabilityTitle = null;
@@ -114,7 +114,7 @@ function redmineTest() {
           assertThat(result).is(expect);
         }
       },
-      'createTicket': function() {
+      'createTicket': () => {
         // override Object#getContentText to mock
         const getContentTextOrigin = Object.prototype.getContentText;
         Object.prototype.getContentText = function() {
@@ -158,10 +158,10 @@ function redmineTest() {
         Object.prototype.getContentText = getContentTextOrigin;
       },
       'getTicketId': {
-        'when ticket exist': function() {
+        'when ticket exist': () => {
           // override function to mock
           const getContentTextOrigin = Object.prototype.getContentText;
-          Object.prototype.getContentText = function() {
+          Object.prototype.getContentText = () => {
             return JSON.stringify({
               'total_count': 1,
               'results': [
@@ -180,10 +180,10 @@ function redmineTest() {
           // revert overridden function
           Object.prototype.getContentText = getContentTextOrigin;
         },
-        'when ticket not exist': function() {
+        'when ticket not exist': () => {
           // override function to mock
           const getContentTextOrigin = Object.prototype.getContentText;
-          Object.prototype.getContentText = function() {
+          Object.prototype.getContentText = () => {
             return JSON.stringify({
               'total_count': 0,
               'results':     []
@@ -200,7 +200,70 @@ function redmineTest() {
           // revert overridden function
           Object.prototype.getContentText = getContentTextOrigin;
         }
-      }
+      },
+      'getResolvedTicketIds': () => {
+        // override Object#getContentText to mock
+        const getContentTextOrigin = Object.prototype.getContentText;
+        Object.prototype.getContentText = function() {
+          return JSON.stringify({ 'issues': [{ 'id': 1 }, { 'id': 2 }, { 'id': 3 }] });
+        };
+
+        const result = JSON.stringify(getResolvedTicketIds());
+        const expect = JSON.stringify([1, 2, 3]);
+
+        assertThat(result).is(expect);
+
+        // revert overridden function
+        Object.prototype.getContentText = getContentTextOrigin;
+      },
+      'finishFOrResolvedTickets': () => {
+        // override function to mock
+        const getResolvedTicketIdsOrigin = getResolvedTicketIds;
+        const mockResolvedTickerIds = [1, 2, 3];
+        getResolvedTicketIds = () => mockResolvedTickerIds;
+
+        const fetchHistory = [];
+        UrlFetchApp.fetch = (url, params) => {
+          const result = {
+            'url': url,
+            'params': params
+          };
+
+          fetchHistory.push(result);
+          return result;
+        };
+
+        finishForResolvedTickets();
+
+        const result = JSON.stringify(fetchHistory);
+        const expect = JSON.stringify(mockResolvedTickerIds.map(i => ({
+          'url': `${redmine.url}/issues/${i}.json`,
+          'params': {
+            'method': 'put',
+            'contentType': 'application/json',
+            'headers': {
+              'X-Redmine-API-Key': redmine.apiKey,
+            },
+            'payload': JSON.stringify({
+              'issue': {
+                'status_id': redmine.status.finish,
+                'notes': '解決済チケットを終了（スクリプトによる自動終了）',
+              },
+            })
+          },
+        })));
+
+        assertThat(result).is(expect);
+
+        // revert overridden function
+        getResolvedTicketIds = getResolvedTicketIdsOrigin;
+        UrlFetchApp.fetch = (url, params) => {
+          return {
+            'url': url,
+            'params': params
+          };
+        };
+      },
     }
   });
-}
+};
