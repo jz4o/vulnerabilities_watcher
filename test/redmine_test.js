@@ -200,7 +200,70 @@ const redmineTest = () => {
           // revert overridden function
           Object.prototype.getContentText = getContentTextOrigin;
         }
-      }
+      },
+      'getResolvedTicketIds': () => {
+        // override Object#getContentText to mock
+        const getContentTextOrigin = Object.prototype.getContentText;
+        Object.prototype.getContentText = function() {
+          return JSON.stringify({ 'issues': [{ 'id': 1 }, { 'id': 2 }, { 'id': 3 }] });
+        };
+
+        const result = JSON.stringify(getResolvedTicketIds());
+        const expect = JSON.stringify([1, 2, 3]);
+
+        assertThat(result).is(expect);
+
+        // revert overridden function
+        Object.prototype.getContentText = getContentTextOrigin;
+      },
+      'finishFOrResolvedTickets': () => {
+        // override function to mock
+        const getResolvedTicketIdsOrigin = getResolvedTicketIds;
+        const mockResolvedTickerIds = [1, 2, 3];
+        getResolvedTicketIds = () => mockResolvedTickerIds;
+
+        const fetchHistory = [];
+        UrlFetchApp.fetch = (url, params) => {
+          const result = {
+            'url': url,
+            'params': params
+          };
+
+          fetchHistory.push(result);
+          return result;
+        };
+
+        finishForResolvedTickets();
+
+        const result = JSON.stringify(fetchHistory);
+        const expect = JSON.stringify(mockResolvedTickerIds.map(i => ({
+          'url': `${redmine.url}/issues/${i}.json`,
+          'params': {
+            'method': 'put',
+            'contentType': 'application/json',
+            'headers': {
+              'X-Redmine-API-Key': redmine.apiKey,
+            },
+            'payload': JSON.stringify({
+              'issue': {
+                'status_id': redmine.status.finish,
+                'notes': '解決済チケットを終了（スクリプトによる自動終了）',
+              },
+            })
+          },
+        })));
+
+        assertThat(result).is(expect);
+
+        // revert overridden function
+        getResolvedTicketIds = getResolvedTicketIdsOrigin;
+        UrlFetchApp.fetch = (url, params) => {
+          return {
+            'url': url,
+            'params': params
+          };
+        };
+      },
     }
   });
 };
