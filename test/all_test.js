@@ -1,7 +1,8 @@
 const allTest = () => {
   const testFunctions = shuffle([
     redmineTest,
-    utilitiesTest
+    utilitiesTest,
+    watcherTest,
   ]);
 
   testFunctions.forEach(testFunction => {
