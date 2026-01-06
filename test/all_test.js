@@ -3,6 +3,7 @@ const allTest = () => {
     redmineTest,
     utilitiesTest,
     watcherTest,
+    esetWatcherTest,
   ]);
 
   testFunctions.forEach(testFunction => {
