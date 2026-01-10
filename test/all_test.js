@@ -4,6 +4,7 @@ const allTest = () => {
     utilitiesTest,
     watcherTest,
     esetWatcherTest,
+    jc3WatcherTest,
   ]);
 
   testFunctions.forEach(testFunction => {
