@@ -54,7 +54,7 @@ class Jc3Watcher extends Watcher {
 
     // 新着情報から条件に該当するデータを取得
     const results = newsDescriptions.map(newsDescription => {
-      const title = newsDescription.getChild('h3').getValue();
+      const title = newsDescription.getChild('h3').getValue().trim();
       const dateStr = newsDescription.getChild('ul').getChild('li').getText().split('.').join('/');
       const date = new Date(dateStr + ' 23:59:59');
       const href = newsDescription.getChild('h3').getChild('a').getAttribute('href').getValue();
