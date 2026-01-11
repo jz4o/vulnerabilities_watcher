@@ -5,6 +5,7 @@ const allTest = () => {
     watcherTest,
     esetWatcherTest,
     jc3WatcherTest,
+    windowsForestWatcherTest,
   ]);
 
   testFunctions.forEach(testFunction => {
