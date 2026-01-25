@@ -115,10 +115,14 @@ const redmineTest = () => {
         }
       },
       'createTicket': () => {
-        // override Object#getContentText to mock
-        const getContentTextOrigin = Object.prototype.getContentText;
-        Object.prototype.getContentText = function() {
-          return JSON.stringify({ 'issue': this });
+        // override to mock
+        const fetchOrigin = UrlFetchApp.fetch;
+        const fetchResult = {};
+        fetchResult.getContentText = () => JSON.stringify({ 'issue': 'dummyIssue' });
+        const fetchHistory = [];
+        UrlFetchApp.fetch = (url, options) => {
+          fetchHistory.push({ 'url': url, 'options': options });
+          return fetchResult;
         };
 
         const subject     = 'testTitle';
@@ -127,48 +131,53 @@ const redmineTest = () => {
         const categoryId  = 888;
         const doneRatio   = 100;
 
-        const result = JSON.stringify(createTicket(subject, description, statusId, categoryId, doneRatio));
-        const expect = JSON.stringify({
-          'url':    (redmine['url'] + '/issues.json'),
-          'params': {
-            'method'      : 'post',
-            'contentType' : 'application/json',
-            'headers'     : {
-              'X-Redmine-API-Key': redmine['apiKey']
-            },
-            'payload'     : JSON.stringify({
-              'issue': {
-                'project_id'     : redmine['projectId'],
-                'tracker_id'     : redmine['tracker']['task'],
-                'subject'        : subject,
-                'description'    : description,
-                'status_id'      : statusId,
-                'priority_id'    : redmine['priority']['normal'],
-                'assigned_to_id' : config['watcherRedmineId'],
-                'category_id'    : categoryId,
-                'done_ratio'     : doneRatio
-              }
-            })
-          }
-        });
-
+        const result = createTicket(subject, description, statusId, categoryId, doneRatio);
+        const expect = 'dummyIssue';
         assertThat(result).is(expect);
 
-        // revert overridden function
-        Object.prototype.getContentText = getContentTextOrigin;
+        assertThat(fetchHistory.length).is(1);
+
+        const resultUrl = fetchHistory[0].url;
+        const resultOptions = JSON.stringify(fetchHistory[0].options);
+        const expectUrl = redmine['url'] + '/issues.json';
+        const expectOptions = JSON.stringify({
+          'method'      : 'post',
+          'contentType' : 'application/json',
+          'headers'     : {
+            'X-Redmine-API-Key': redmine['apiKey']
+          },
+          'payload'     : JSON.stringify({
+            'issue': {
+              'project_id'     : redmine['projectId'],
+              'tracker_id'     : redmine['tracker']['task'],
+              'subject'        : subject,
+              'description'    : description,
+              'status_id'      : statusId,
+              'priority_id'    : redmine['priority']['normal'],
+              'assigned_to_id' : config['watcherRedmineId'],
+              'category_id'    : categoryId,
+              'done_ratio'     : doneRatio
+            }
+          })
+        });
+        assertThat(resultUrl).is(expectUrl);
+        assertThat(resultOptions).is(expectOptions);
+
+        // revert overridden
+        UrlFetchApp.fetch = fetchOrigin;
       },
       'getTicketId': {
         'when ticket exist': () => {
-          // override function to mock
-          const getContentTextOrigin = Object.prototype.getContentText;
-          Object.prototype.getContentText = () => {
-            return JSON.stringify({
-              'total_count': 1,
-              'results': [
-                { 'id': 999 }
-              ]
-            });
-          };
+          // override to mock
+          const fetchOrigin = UrlFetchApp.fetch;
+          const fetchResult = {};
+          fetchResult.getContentText = () => JSON.stringify({
+            'total_count': 1,
+            'results': [
+              { 'id': 999 }
+            ]
+          });
+          UrlFetchApp.fetch = (_url, _options) => fetchResult;
 
           const vulnerabilityLink = 'testLink';
 
@@ -177,18 +186,18 @@ const redmineTest = () => {
 
           assertThat(result).is(expect);
 
-          // revert overridden function
-          Object.prototype.getContentText = getContentTextOrigin;
+          // revert overridden
+          UrlFetchApp.fetch = fetchOrigin;
         },
         'when ticket not exist': () => {
-          // override function to mock
-          const getContentTextOrigin = Object.prototype.getContentText;
-          Object.prototype.getContentText = () => {
-            return JSON.stringify({
-              'total_count': 0,
-              'results':     []
-            });
-          };
+          // override to mock
+          const fetchOrigin = UrlFetchApp.fetch;
+          const fetchResult = {};
+          fetchResult.getContentText = () => JSON.stringify({
+            'total_count': 0,
+            'results': []
+          });
+          UrlFetchApp.fetch = (_url, _options) => fetchResult;
 
           const vulnerabilityLink = 'testLink';
 
@@ -197,24 +206,24 @@ const redmineTest = () => {
 
           assertThat(result).is(expect);
 
-          // revert overridden function
-          Object.prototype.getContentText = getContentTextOrigin;
+          // revert overridden
+          UrlFetchApp.fetch = fetchOrigin;
         }
       },
       'getResolvedTicketIds': () => {
-        // override Object#getContentText to mock
-        const getContentTextOrigin = Object.prototype.getContentText;
-        Object.prototype.getContentText = function() {
-          return JSON.stringify({ 'issues': [{ 'id': 1 }, { 'id': 2 }, { 'id': 3 }] });
-        };
+        // override to mock
+        const fetchOrigin = UrlFetchApp.fetch;
+        const fetchResult = {};
+        fetchResult.getContentText = () => JSON.stringify({ 'issues': [{ 'id': 1 }, { 'id': 2 }, { 'id': 3 }] });
+        UrlFetchApp.fetch = (_url, _options) => fetchResult;
 
         const result = JSON.stringify(getResolvedTicketIds());
         const expect = JSON.stringify([1, 2, 3]);
 
         assertThat(result).is(expect);
 
-        // revert overridden function
-        Object.prototype.getContentText = getContentTextOrigin;
+        // revert overridden
+        UrlFetchApp.fetch = fetchOrigin;
       },
       'finishFOrResolvedTickets': () => {
         // override function to mock

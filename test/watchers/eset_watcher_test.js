@@ -205,10 +205,9 @@ const esetWatcherTest = () => {
       },
       'getEsetNewNews': () => {
         // override to mock
-        UrlFetchApp = {};
-        UrlFetchApp.fetch = url => ({ 'url': url });
-        const getContentTextOrigin = Object.prototype.getContentText;
-        Object.prototype.getContentText = function() {
+        const fetchOrigin = UrlFetchApp.fetch;
+        const fetchResult = {};
+        fetchResult.getContentText = () => {
           return `
             <rss version="2.0">
               <channel>
@@ -250,6 +249,7 @@ const esetWatcherTest = () => {
             </rss>
           `;
         };
+        UrlFetchApp.fetch = _url => fetchResult;
 
         const result = EsetWatcher.getEsetNewNews(new Date(1000));
         const resultNews = JSON.stringify(result[0]);
@@ -263,7 +263,7 @@ const esetWatcherTest = () => {
         assertThat(resultNews).is(expect);
 
         // revert overridden
-        Object.prototype.getContentText = getContentTextOrigin;
+        UrlFetchApp.fetch = fetchOrigin;
       },
     },
   });

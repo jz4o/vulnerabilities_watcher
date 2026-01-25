@@ -205,10 +205,9 @@ const jc3WatcherTest = () => {
       },
       'getJc3NewInformation': () => {
         // override to mock
-        UrlFetchApp = {};
-        UrlFetchApp.fetch = url => ({ 'url': url });
-        const getContentTextOrigin = Object.prototype.getContentText;
-        Object.prototype.getContentText = () => {
+        const fetchOrigin = UrlFetchApp.fetch;
+        const fetchResult = {};
+        fetchResult.getContentText = () => {
           return `
             <label class="tab-label TAB-02" for="TAB-02">脅威情報</label>
             <div class="tab-content">
@@ -244,6 +243,7 @@ const jc3WatcherTest = () => {
             </div>
           `;
         };
+        UrlFetchApp.fetch = _url => fetchResult;
 
         const result = Jc3Watcher.getJc3NewInformation(new Date(1000 * 60 * 60 * 24));
         const resultInformation = JSON.stringify(result[0]);
@@ -257,7 +257,7 @@ const jc3WatcherTest = () => {
         assertThat(resultInformation).is(expect);
 
         // revert overridden
-        Object.prototype.getContentText = getContentTextOrigin;
+        UrlFetchApp.fetch = fetchOrigin;
       },
     },
   });
