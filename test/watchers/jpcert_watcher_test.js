@@ -277,10 +277,9 @@ const jpcertWatcherTest = () => {
       },
       'getJpcertNewHeadsUp': () => {
         // override to mock
-        UrlFetchApp = {};
-        UrlFetchApp.fetch = url => ({ 'url': url });
-        const getContentTextOrigin = Object.prototype.getContentText;
-        Object.prototype.getContentText = () => {
+        const fetchOrigin = UrlFetchApp.fetch;
+        const fetchResult = {};
+        fetchResult.getContentText = () => {
           return `
             <?xml version="1.0" encoding="UTF-8" ?>
 
@@ -327,6 +326,7 @@ const jpcertWatcherTest = () => {
             </rdf:RDF>
           `.trim();
         };
+        UrlFetchApp.fetch = _url => fetchResult;
 
         const result = JpcertWatcher.getJpcertNewHeadsUp(new Date(0));
         const resultNewHeadsUp = JSON.stringify(result[0]);
@@ -347,14 +347,13 @@ const jpcertWatcherTest = () => {
         assertThat(resultUpdateHeadsUp).is(expectUpdateHeadsUp);
 
         // revert overridden
-        Object.prototype.getContentText = getContentTextOrigin;
+        UrlFetchApp.fetch = fetchOrigin;
       },
       'getJpcertNewVulnerabilities': () => {
         // override to mock
-        UrlFetchApp = {};
-        UrlFetchApp.fetch = url => ({ 'url': url });
-        const getContentTextOrigin = Object.prototype.getContentText;
-        Object.prototype.getContentText = () => {
+        const fetchOrigin = UrlFetchApp.fetch;
+        const fetchResult = {};
+        fetchResult.getContentText = () => {
           return `
             <?xml version="1.0" encoding="UTF-8"?>
             <rdf:RDF
@@ -393,6 +392,7 @@ const jpcertWatcherTest = () => {
             </rdf:RDF>
           `.trim();
         };
+        UrlFetchApp.fetch = _url => fetchResult;
 
         const result = JpcertWatcher.getJpcertNewVulnerabilities(new Date(0));
         const resultVulnerability = JSON.stringify(result[0]);
@@ -406,7 +406,7 @@ const jpcertWatcherTest = () => {
         assertThat(resultVulnerability).is(expect);
 
         // revert overridden
-        Object.prototype.getContentText = getContentTextOrigin;
+        UrlFetchApp.fetch = fetchOrigin;
       },
     },
   });

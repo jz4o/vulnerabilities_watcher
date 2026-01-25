@@ -1,5 +1,6 @@
 const allTest = () => {
   const testFunctions = shuffle([
+    codeTest,
     redmineTest,
     utilitiesTest,
     watcherTest,

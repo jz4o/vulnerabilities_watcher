@@ -205,10 +205,9 @@ const windowsForestWatcherTest = () => {
       },
       'getWindowsForestSecurityArticles': () => {
         // override to mock
-        UrlFetchApp = {};
-        UrlFetchApp.fetch = url => ({ 'url': url });
-        const getContentTextOrigin = Object.prototype.getContentText;
-        Object.prototype.getContentText = () => {
+        const fetchOrigin = UrlFetchApp.fetch;
+        const fetchResult = {};
+        fetchResult.getContentText = () => {
           return `
             <section class="list">
               <div class="article list wrap">
@@ -278,6 +277,7 @@ const windowsForestWatcherTest = () => {
             </section>
           `.replace(/\s*\n\s*/g, '');
         };
+        UrlFetchApp.fetch = _url => fetchResult;
 
         const result = WindowsForestWatcher.getWindowsForestSecurityArticles(new Date(1000 * 60 * 60 * 24));
         const resultArticle = JSON.stringify(result[0]);
@@ -291,7 +291,7 @@ const windowsForestWatcherTest = () => {
         assertThat(resultArticle).is(expect);
 
         // revert overridden
-        Object.prototype.getContentText = getContentTextOrigin;
+        UrlFetchApp.fetch = fetchOrigin;
       },
     },
   });

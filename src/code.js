@@ -68,7 +68,7 @@ function setupSheets() {
 /**
  * 設定値の初期化処理.
  *
- * 不足分設定を追加し、configシートを更新
+ * 設定シートの内容を取得し、不足分設定を追加
  */
 function setupConfig() {
   // configシートの内容を取得
@@ -86,9 +86,6 @@ function setupConfig() {
       config[key] = configDefaultValues[key];
     }
   }
-
-  // configシートの内容を更新
-  updateConfigSheet();
 }
 
 /**
@@ -97,8 +94,19 @@ function setupConfig() {
  * @return [HashMap] configシートの内容
  */
 function getConfig() {
-  const configData  = configSheet.getDataRange().getValues();
-  const titleRow    = configData[0];
+  if (!configSheet) {
+    throw('configSheet is not setup.');
+  }
+
+  const configData = configSheet.getDataRange().getValues();
+  if (configData.length === 0) {
+    return {};
+  }
+
+  const titleRow = configData.shift();
+  if (!titleRow.includes('key') || !titleRow.includes('value')) {
+    throw('configSheet first row is not title row.');
+  }
   const keyColumn   = titleRow.indexOf('key');
   const valueColumn = titleRow.indexOf('value');
 
