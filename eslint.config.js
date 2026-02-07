@@ -25,7 +25,10 @@ export default [
       'padded-blocks': ['error', 'never'],
       'quotes': ['error', 'single', { 'avoidEscape': true }],
       'quote-props': ['error', 'always'],
-      'semi': ['error', 'always']
+      'semi': ['error', 'always'],
+
+      // temporary ignores
+      'no-unassigned-vars': 'off',
     }
   },
   {
